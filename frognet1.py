@@ -182,3 +182,4 @@ plot_frog(E=E, t=t, w=w,  dt=dt, w0=w0, plot=True)
 
 
 plt.show()
+#s
