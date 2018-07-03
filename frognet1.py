@@ -190,6 +190,9 @@ def plot_frog(E, t, w, dt, w0, plot):
 
         plt.pcolormesh(frogtrace[w_min_index:w_max_index, taumin_index:taumax_index], cmap='jet')
 
+        plt.figure(995)
+        plt.pcolormesh(tau, w, frogtrace)
+
 
 
     # return an image of the FROG trace
@@ -202,17 +205,12 @@ def plot_frog(E, t, w, dt, w0, plot):
     return frogtrace[w_min_index:w_max_index, taumin_index:taumax_index], tau[taumin_index:taumax_index],\
            w[w_min_index:w_max_index]
 
-# E, t, w, dt, w0 = generateE(plot=True, GVD=1e-30, TOD=15e-45)
-#
-#
-# plot_frog(E=E, t=t, w=w,  dt=dt, w0=w0, plot=True)
-#
 
 def generateE_phi_vector(plot, phi_w):
 
     # N = 2000
     N = len(phi_w)
-    dt = 0.25e-15
+    dt = 0.3e-15
     df = 1 / (dt * N)
 
     # time axis
@@ -329,17 +327,26 @@ def generate_phi_w(N, nodes, amplitude):
     return phi_w
 
 
-phi_w = generate_phi_w(N=2000, nodes=150, amplitude=3)
+if __name__ == '__main__':
 
-E, t, w, dt, w0 = generateE_phi_vector(plot=False, phi_w=phi_w)
+    # E, t, w, dt, w0 = generateE(plot=True, GVD=1e-30, TOD=15e-45)
+    #
+    #
+    # plot_frog(E=E, t=t, w=w,  dt=dt, w0=w0, plot=True)
+    #
 
-frogtrace, tau, w = plot_frog(E=E, t=t, w=w, dt=dt, w0=w0, plot=False)
+    phi_w = generate_phi_w(N=600, nodes=100, amplitude=3)
 
+    E, t, w, dt, w0 = generateE_phi_vector(plot=True, phi_w=phi_w)
 
-# plt.figure(98)
-# plt.pcolormesh(tau, w, frogtrace, cmap='jet')
-plt.show()
-#ss
+    frogtrace, tau, w = plot_frog(E=E, t=t, w=w, dt=dt, w0=w0, plot=True)
+
+    # plt.figure(98)
+
+    # plt.pcolormesh(tau, w, frogtrace, cmap='jet')
+
+    plt.show()
+    #ss
 
 
 
