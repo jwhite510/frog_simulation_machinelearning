@@ -335,7 +335,7 @@ if __name__ == '__main__':
     # plot_frog(E=E, t=t, w=w,  dt=dt, w0=w0, plot=True)
     #
 
-    phi_w = generate_phi_w(N=600, nodes=100, amplitude=3)
+    phi_w = generate_phi_w(N=1000, nodes=100, amplitude=3)
 
     E, t, w, dt, w0 = generateE_phi_vector(plot=True, phi_w=phi_w)
 
