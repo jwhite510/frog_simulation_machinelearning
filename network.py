@@ -59,8 +59,6 @@ hdf5_file.close()
 
 model.fit(frog.reshape(-1, 57, 334, 1), E_apended, epochs=1)
 
-
-
 # check with a value from dataset
 index_test = 1
 

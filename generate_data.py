@@ -19,9 +19,9 @@ def retrieve_data(plot_frog_bool, print_size):
     return E, t, frogtrace.reshape(-1)
 
 
-if '__name__' == '__main__':
+if __name__ == '__main__':
     E, t, frogtrace_flat = retrieve_data(plot_frog_bool=False, print_size=True)
-    exit(0)
+
     # data for input
     E_real = np.real(E)
     E_imag = np.imag(E)
@@ -39,7 +39,7 @@ if '__name__' == '__main__':
 
     # populate file
     print('generating samples')
-    n_samples = 1000
+    n_samples = 10000
     hdf5_file = tables.open_file('frogtrainingdata.hdf5', mode='a')
     for i in range(n_samples):
 
