@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 def retrieve_data(plot_frog_bool, print_size):
 
-    phi_w = generate_phi_w(N=600, nodes=100, amplitude=3)
+    phi_w = generate_phi_w(N=2**7, nodes=30, amplitude=3)
 
     E, t, w, dt, w0 = generateE_phi_vector(plot=False, phi_w=phi_w)
 
@@ -39,7 +39,7 @@ if __name__ == '__main__':
 
     # populate file
     print('generating samples')
-    n_samples = 10000
+    n_samples = 1000
     hdf5_file = tables.open_file('frogtrainingdata.hdf5', mode='a')
     for i in range(n_samples):
 
@@ -58,13 +58,16 @@ if __name__ == '__main__':
 
     # open and read
     hdf5_file = tables.open_file('frogtrainingdata.hdf5', mode='r')
-    index = 99
+    index = 0
+
     E = hdf5_file.root.E_real[index, :] + 1j * hdf5_file.root.E_imag[index, :]
     fig, ax = plt.subplots(2, 1)
-    ax[0].pcolormesh(hdf5_file.root.frog[index, :].reshape(57, 334), cmap='jet')
+    ax[0].pcolormesh(hdf5_file.root.frog[index, :].reshape(58, 106), cmap='jet')
+    ax[1].plot(t, np.abs(E), color='black', linestyle='dashed', alpha=0.5)
     ax[1].plot(t, np.real(E), color='blue')
     ax[1].plot(t, np.imag(E), color='red')
-    ax[1].plot(t, np.abs(E), color='blue', linestyle='dashed')
+
     hdf5_file.close()
+
     plt.show()
 

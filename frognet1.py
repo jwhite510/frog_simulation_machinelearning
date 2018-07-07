@@ -155,10 +155,13 @@ if __name__ == '__main__':
 
     E, t, w, dt, w0 = generateE_phi_vector(plot=False, phi_w=phi_w)
 
-    frogtrace, tau, w = plot_frog(E=E, t=t, w=w, dt=dt, w0=w0, plot=False)
+    frogtrace, tau, w = plot_frog(E=E, t=t, w=w, dt=dt, w0=w0, plot=True)
 
     plt.figure(98)
     plt.pcolormesh(tau, w, frogtrace, cmap='jet')
+
+    plt.figure(99)
+    plt.plot(t, np.abs(E))
 
     plt.show()
 
