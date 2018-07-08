@@ -69,6 +69,7 @@ hdf5_file.close()
 
 
 model.fit(frog.reshape(-1, 58, 106, 1), E_apended, epochs=1000)
+model.save('./model.hdf5')
 
 # check with a value from dataset
 def test_sample(index):
@@ -99,6 +100,10 @@ test_sample(0)
 test_sample(1)
 test_sample(2)
 test_sample(3)
+test_sample(5)
+test_sample(6)
+test_sample(7)
+test_sample(8)
 
 plt.show()
 
