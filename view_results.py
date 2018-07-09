@@ -4,7 +4,9 @@ from generate_data import retrieve_data
 import numpy as np
 import tables
 
-model = models.load_model('model.hdf5')
+# model = models.load_model('model.hdf5')
+model = models.load_model('1000_epochs_600_samples.hdf5')
+
 
 _, t, _ = retrieve_data(False, False)
 
