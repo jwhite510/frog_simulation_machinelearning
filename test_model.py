@@ -5,11 +5,10 @@ import numpy as np
 
 # model = models.load_model('./2000_epoch_1000_sample/2000_epochs_1000_samples.hdf5')
 
-model = models.load_model('./1000_epoch_1000_sample/1000_epoch_1000_sample.hdf5')
-
+model = models.load_model("./network_config_2/500_epoch_3000_samples/model.hdf5")
 
 tests = 3
-fig, ax = plt.subplots(3, tests)
+fig, ax = plt.subplots(3, tests, figsize=(10, 10))
 for j in range(tests):
     # generate data
     E_actual, t, frogtrace_flat = retrieve_data(plot_frog_bool=False, print_size=False)
@@ -42,7 +41,7 @@ for j in range(tests):
     ax[1][j].set_yticks([])
 
     ax[2][j].plot(t, np.abs(E_pred), color='black')
-    ax[2][j].set_xticks([])
+    # ax[2][j].set_xticks([])
     ax[2][j].set_yticks([])
     axtwin = ax[2][j].twinx()
 
@@ -62,10 +61,5 @@ for j in range(tests):
         ax[0][j].set_ylabel('Actual E(t)')
         ax[1][j].set_ylabel('FROG trace')
         ax[2][j].set_ylabel('Retrieved E(t)')
-
-
-
-
-
 
 plt.show()

@@ -106,27 +106,35 @@ def generateE_phi_vector(plot, phi_w):
         ax[0].plot(t, np.real(E_t), color='blue')
         ax[0].plot(t, np.imag(E_t), color='red')
         ax[0].plot(t, np.abs(E_t), color='black', linestyle='dashed', alpha=0.5)
+        ax[0].set_ylabel('$E(t)$')
         axtwin = ax[0].twinx()
         axtwin.plot(t, np.unwrap(np.angle(E_t)), color='green')
+        axtwin.set_ylabel('$\phi (t)$', color='green')
 
         ax[1].plot(w, np.real(E_w), color='blue')
         ax[1].plot(w, np.imag(E_w), color='red')
         ax[1].plot(w, np.abs(E_w), color='black', linestyle='dashed', alpha=0.5)
+        ax[1].set_ylabel('$E(\omega)$')
         axtwin = ax[1].twinx()
         axtwin.plot(w, np.unwrap(np.angle(E_w)), color='green')
         axtwin.plot(w, phi_w, color='green', linestyle='dashed')
+        axtwin.set_ylabel('$\phi (\omega)$', color='green')
 
         ax[2].plot(w, np.real(E_w_prop), color='blue')
         ax[2].plot(w, np.imag(E_w_prop), color='red')
         ax[2].plot(w, np.abs(E_w_prop), color='black', linestyle='dashed', alpha=0.5)
+        ax[2].set_ylabel('$E(\omega)$')
         axtwin = ax[2].twinx()
         axtwin.plot(w, np.unwrap(np.angle(E_w_prop)), color='green')
+        axtwin.set_ylabel('$\phi (\omega)$', color='green')
 
         ax[3].plot(t, np.real(E_t_prop), color='blue')
         ax[3].plot(t, np.imag(E_t_prop), color='red')
         ax[3].plot(t, np.abs(E_t_prop), color='black', linestyle='dashed', alpha=0.5)
+        ax[3].set_ylabel('$E(t)$')
         axtwin = ax[3].twinx()
         axtwin.plot(t, np.unwrap(np.angle(E_t_prop)), color='green')
+        axtwin.set_ylabel('$\phi (t)$', color='green')
 
 
     return E_t_prop, t, w, dt, w0
@@ -153,7 +161,7 @@ if __name__ == '__main__':
 
     phi_w = generate_phi_w(N=2**7, nodes=30, amplitude=3)
 
-    E, t, w, dt, w0 = generateE_phi_vector(plot=False, phi_w=phi_w)
+    E, t, w, dt, w0 = generateE_phi_vector(plot=True, phi_w=phi_w)
 
     frogtrace, tau, w = plot_frog(E=E, t=t, w=w, dt=dt, w0=w0, plot=True)
 
