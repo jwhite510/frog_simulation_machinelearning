@@ -8,7 +8,7 @@ from sklearn.preprocessing import MinMaxScaler
 from generate_data import retrieve_data
 
 
-_, t, _ = retrieve_data(False, False)
+_, t, _, _, _, _ = retrieve_data(False, False)
 # open and read
 # hdf5_file = tables.open_file('frogtrainingdata.hdf5', mode='r')
 # index = 99

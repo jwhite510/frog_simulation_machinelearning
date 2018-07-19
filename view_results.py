@@ -8,7 +8,7 @@ import tables
 model = models.load_model('1000_epochs_600_samples.hdf5')
 
 
-_, t, _ = retrieve_data(False, False)
+_, t, _, _, _, _ = retrieve_data(False, False)
 
 def test_sample(index):
 

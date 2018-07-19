@@ -10,17 +10,17 @@ def retrieve_data(plot_frog_bool, print_size):
 
     E, t, w, dt, w0 = generateE_phi_vector(plot=False, phi_w=phi_w)
 
-    frogtrace, tau, w = plot_frog(E=E, t=t, w=w, dt=dt, w0=w0, plot=plot_frog_bool)
+    frogtrace, tau, w_frogplot = plot_frog(E=E, t=t, w=w, dt=dt, w0=w0, plot=plot_frog_bool)
 
     if print_size:
         print('original size: ', frogtrace.shape)
         print('E size', E.shape)
 
-    return E, t, frogtrace.reshape(-1)
+    return E, t, w, dt, w0, frogtrace.reshape(-1)
 
 
 if __name__ == '__main__':
-    E, t, frogtrace_flat = retrieve_data(plot_frog_bool=False, print_size=True)
+    E, t, _, _, _, frogtrace_flat = retrieve_data(plot_frog_bool=False, print_size=True)
 
     # data for input
     E_real = np.real(E)
@@ -43,7 +43,7 @@ if __name__ == '__main__':
     hdf5_file = tables.open_file('frogtrainingdata.hdf5', mode='a')
     for i in range(n_samples):
 
-        E, t, frogtrace_flat = retrieve_data(plot_frog_bool=False, print_size=False)
+        E, t, _, _, _, frogtrace_flat = retrieve_data(plot_frog_bool=False, print_size=False)
 
         E_real = np.real(E)
         E_imag = np.imag(E)
