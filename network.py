@@ -1,7 +1,7 @@
 import tensorflow as tf
 import tables
 import matplotlib.pyplot as plt
-from tensorflow.contrib.keras import models
+from tensorflow.contrib.keras import models, callbacks
 import numpy as np
 from tensorflow.contrib.keras import layers, losses, optimizers, metrics, activations
 from sklearn.preprocessing import MinMaxScaler
@@ -67,8 +67,11 @@ E_apended = np.concatenate((E_real, E_imag), 1)
 
 hdf5_file.close()
 
+# create logging object
+tbCallback = callbacks.TensorBoard(log_dir="./Graph", histogram_freq=0,
+                                   write_graph=True, write_images=True)
 
-model.fit(frog.reshape(-1, 58, 106, 1), E_apended, epochs=1000)
+model.fit(frog.reshape(-1, 58, 106, 1), E_apended, epochs=1000, callbacks=[tbCallback])
 model.save('./model.hdf5')
 
 # check with a value from dataset
