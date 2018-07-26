@@ -71,7 +71,7 @@ hdf5_file.close()
 tbCallback = callbacks.TensorBoard(log_dir="./Graph", histogram_freq=0,
                                    write_graph=True, write_images=True)
 
-model.fit(frog.reshape(-1, 58, 106, 1), E_apended, epochs=1000, callbacks=[tbCallback])
+model.fit(frog.reshape(-1, 58, 106, 1), E_apended, epochs=10, callbacks=[tbCallback])
 model.save('./model.hdf5')
 
 # check with a value from dataset

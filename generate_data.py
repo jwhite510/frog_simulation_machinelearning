@@ -28,18 +28,28 @@ if __name__ == '__main__':
 
     # create file
     hdf5_file = tables.open_file('frogtrainingdata.hdf5', mode='w')
-    frog_image = hdf5_file.create_earray(hdf5_file.root,
+    frog_image_f = hdf5_file.create_earray(hdf5_file.root,
                                             'frog', tables.Float16Atom(), shape=(0, len(frogtrace_flat)))
-    E_real = hdf5_file.create_earray(hdf5_file.root,
+    E_real_f = hdf5_file.create_earray(hdf5_file.root,
                                       'E_real', tables.Float16Atom(), shape=(0, len(E_real)))
-    E_imag = hdf5_file.create_earray(hdf5_file.root,
+    E_imag_f = hdf5_file.create_earray(hdf5_file.root,
+                                      'E_imag', tables.Float16Atom(), shape=(0, len(E_imag)))
+    hdf5_file.close()
+
+    # create file
+    hdf5_file = tables.open_file('frogtestdata.hdf5', mode='w')
+    frog_image_f = hdf5_file.create_earray(hdf5_file.root,
+                                            'frog', tables.Float16Atom(), shape=(0, len(frogtrace_flat)))
+    E_real_f = hdf5_file.create_earray(hdf5_file.root,
+                                      'E_real', tables.Float16Atom(), shape=(0, len(E_real)))
+    E_imag_f = hdf5_file.create_earray(hdf5_file.root,
                                       'E_imag', tables.Float16Atom(), shape=(0, len(E_imag)))
     hdf5_file.close()
 
 
     # populate file
     print('generating samples')
-    n_samples = 1000
+    n_samples = 10
     hdf5_file = tables.open_file('frogtrainingdata.hdf5', mode='a')
     for i in range(n_samples):
 
@@ -54,6 +64,25 @@ if __name__ == '__main__':
         if i % 5 == 0:
             print('generating sample: ', i, ' of ', n_samples)
     hdf5_file.close()
+
+    print('generating test samples')
+    n_samples = 10
+    hdf5_file = tables.open_file('frogtestdata.hdf5', mode='a')
+    for i in range(n_samples):
+
+        E, t, _, _, _, frogtrace_flat = retrieve_data(plot_frog_bool=False, print_size=False)
+
+        E_real = np.real(E)
+        E_imag = np.imag(E)
+        hdf5_file.root.E_real.append(E_real.reshape(1, -1))
+        hdf5_file.root.frog.append(frogtrace_flat.reshape(1, -1))
+        hdf5_file.root.E_imag.append(E_imag.reshape(1, -1))
+
+        if i % 5 == 0:
+            print('generating test sample: ', i, ' of ', n_samples)
+    hdf5_file.close()
+
+
 
 
     # open and read
