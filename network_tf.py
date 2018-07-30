@@ -34,7 +34,20 @@ class GetData():
 
         return  frog_batch, E_appended_batch
 
-    def evaluation_data(self):
+    def evaluate_on_test_data(self):
+
+        # this is used to evaluate the mean squared error of the data after every epoch
+
+        hdf5_file = tables.open_file("frogtestdata.hdf5", mode="r")
+        E_real_eval = hdf5_file.root.E_real[:, :]
+        E_imag_eval = hdf5_file.root.E_imag[:, :]
+        E_appended_eval = np.append(E_real_eval, E_imag_eval, 1)
+        frog_eval = hdf5_file.root.frog[:, :]
+        hdf5_file.close()
+
+        return frog_eval, E_appended_eval
+
+    def evaluate_on_train_data(self):
 
         # this is used to evaluate the mean squared error of the data after every epoch
 
@@ -46,7 +59,6 @@ class GetData():
         hdf5_file.close()
 
         return frog_eval, E_appended_eval
-
 
 
 def init_weights(shape):
@@ -101,81 +113,78 @@ train = optimizer.minimize(loss)
 
 init = tf.global_variables_initializer()
 
-epochs = 1000
-
 # initialize data object
 get_data = GetData(batch_size=10)
+
+test_mse_tb = tf.summary.scalar("test_mse", loss)
+train_mse_tb = tf.summary.scalar("train_mse", loss)
 _, t, _, _, _, _ = retrieve_data(False, False)
-plt.ion()
+saver = tf.train.Saver()
 
+epochs = 10
 
-_, ax1 = plt.subplots(1, 2)
-_, ax2 = plt.subplots(1, 2)
+if __name__ == "__main__":
+    modelname = "first_test"
+    # create figures to visualize predictions in realtime
+    _, ax1 = plt.subplots(1, 2)
+    _, ax2 = plt.subplots(1, 2)
+    plt.ion()
+    with tf.Session() as sess:
+        sess.run(init)
+        writer = tf.summary.FileWriter("./tensorboard_graph/"+modelname)
+        # summaries = tf.summary.merge_all()
 
+        for i in range(epochs):
+            print("Epoch : {}".format(i+1))
 
-with tf.Session() as sess:
-    sess.run(init)
+            # iterate through every sample in the training set
+            dots = 0
+            while get_data.batch_index < get_data.samples:
 
-    for i in range(epochs):
-        print("Epoch : {}".format(i+1))
+                percent = 50 * get_data.batch_index / get_data.samples
+                if percent - dots > 1:
+                    print(".", end="", flush=True)
+                    dots += 1
 
-        # iterate through every sample in the training set
-        while get_data.batch_index < get_data.samples:
+                batch_x, batch_y = get_data.next_batch()
+                sess.run(train, feed_dict={x: batch_x, y_true: batch_y})
 
-            batch_x, batch_y = get_data.next_batch()
-            sess.run(train, feed_dict={x: batch_x, y_true: batch_y})
+            print("")
 
-        # view the mean squared error on evaluation data
-        batch_x_eval, batch_y_eval = get_data.evaluation_data()
-        print("MSE: ", sess.run(loss, feed_dict={x: batch_x_eval, y_true: batch_y_eval}))
-        predictions = sess.run(y_pred, feed_dict={x: batch_x_eval, y_true: batch_y_eval})
+            # view the mean squared error of the train data
+            batch_x_train, batch_y_train = get_data.evaluate_on_train_data()
+            print("train MSE: ", sess.run(loss, feed_dict={x: batch_x_train, y_true: batch_y_train}))
 
-        for ax, index in zip([ax1, ax2], [1, 2]):
-            ax[0].cla()
-            ax[0].plot(t, predictions[index, :128], color="blue")
-            ax[0].plot(t, predictions[index, 128:], color="red")
-            ax[0].set_title("prediction")
-            ax[1].cla()
-            ax[1].plot(t, batch_y_eval[index, :128], color="blue")
-            ax[1].plot(t, batch_y_eval[index, 128:], color="red")
-            ax[1].set_title("actual")
+            # view the mean squared error of the test data
+            batch_x_test, batch_y_test = get_data.evaluate_on_test_data()
+            print("test MSE: ", sess.run(loss, feed_dict={x: batch_x_test, y_true: batch_y_test}), "\n")
 
-        plt.show()
-        plt.pause(0.001)
+            predictions = sess.run(y_pred, feed_dict={x: batch_x_test, y_true: batch_y_test})
 
+            # add summaries for tensorboard
+            summ = sess.run(test_mse_tb, feed_dict={x: batch_x_test, y_true: batch_y_test})
+            writer.add_summary(summ, global_step=i+1)
 
+            summ = sess.run(train_mse_tb, feed_dict={x: batch_x_train, y_true: batch_y_train})
+            writer.add_summary(summ, global_step=i+1)
 
-        # return the index to 0
-        get_data.batch_index = 0
+            writer.flush()
 
+            # update the plot
+            for ax, index in zip([ax1, ax2], [1, 2]):
+                ax[0].cla()
+                ax[0].plot(t, predictions[index, :128], color="blue")
+                ax[0].plot(t, predictions[index, 128:], color="red")
+                ax[0].set_title("prediction [train set]")
+                ax[1].cla()
+                ax[1].plot(t, batch_y_test[index, :128], color="blue")
+                ax[1].plot(t, batch_y_test[index, 128:], color="red")
+                ax[1].set_title("actual [train set]")
 
+            plt.show()
+            plt.pause(0.001)
 
+            # return the index to 0
+            get_data.batch_index = 0
 
-
-
-
-
-
-#
-#
-
-#
-#
-
-
-# create tensorflow model
-
-
-# # open data
-# hdf5_file = tables.open_file("frogtrainingdata.hdf5", mode="r")
-#
-# E_real = hdf5_file.root.E_real[:, :]
-# fig, ax = plt.subplots(1, 1)
-# ax.plot(t, E_real[0, :])
-#
-# E_imag = hdf5_file.root.E_imag[:, :]
-# frog = hdf5_file.root.frog[:, :]
-#
-# hdf5_file.close()
-#
-# plt.show()
+        saver.save(sess, "models/"+modelname+".ckpt")

@@ -49,7 +49,7 @@ if __name__ == '__main__':
 
     # populate file
     print('generating samples')
-    n_samples = 10
+    n_samples = 100
     hdf5_file = tables.open_file('frogtrainingdata.hdf5', mode='a')
     for i in range(n_samples):
 
@@ -66,7 +66,7 @@ if __name__ == '__main__':
     hdf5_file.close()
 
     print('generating test samples')
-    n_samples = 10
+    n_samples = 100
     hdf5_file = tables.open_file('frogtestdata.hdf5', mode='a')
     for i in range(n_samples):
 
