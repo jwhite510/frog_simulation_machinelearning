@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sys import getsizeof
 from generate_data import retrieve_data
+from time import time
 
 
 class GetData():
@@ -97,18 +98,19 @@ y_true = tf.placeholder(tf.float32, shape=[None, 256])
 # layers
 x_image = tf.reshape(x, [-1, 58, 106, 1])
 # shape = [sizex, sizey, channels, filters/features]
-convo_1 = convolutional_layer(x_image, shape=[5, 5, 1, 3])
-convo_2 = convolutional_layer(convo_1, shape=[5, 5, 3, 4])
+convo_1 = convolutional_layer(x_image, shape=[5, 5, 1, 8])
+convo_2 = convolutional_layer(convo_1, shape=[5, 5, 8, 8])
+convo_3 = convolutional_layer(convo_2, shape=[5, 5, 8, 8])
 
-convo_2_flat = tf.reshape(convo_2, [-1, 58*106*4])
+convo_3_flat = tf.reshape(convo_2, [-1, 58*106*8])
 
-full_layer_one = tf.nn.relu(normal_full_layer(convo_2_flat, 1024))
-full_layer_two = tf.nn.relu(normal_full_layer(full_layer_one, 1024))
+full_layer_one = tf.nn.relu(normal_full_layer(convo_3_flat, 512))
+full_layer_two = tf.nn.relu(normal_full_layer(full_layer_one, 512))
 y_pred = normal_full_layer(full_layer_two, 256)
 
 loss = tf.losses.mean_squared_error(labels=y_true, predictions=y_pred)
 
-optimizer = tf.train.AdamOptimizer(learning_rate=0.01)
+optimizer = tf.train.AdamOptimizer(learning_rate=0.001)
 train = optimizer.minimize(loss)
 
 init = tf.global_variables_initializer()
@@ -121,14 +123,22 @@ train_mse_tb = tf.summary.scalar("train_mse", loss)
 _, t, _, _, _, _ = retrieve_data(False, False)
 saver = tf.train.Saver()
 
-epochs = 10
+epochs = 300
 
 if __name__ == "__main__":
     modelname = "first_test"
+
     # create figures to visualize predictions in realtime
     _, ax1 = plt.subplots(1, 2)
     _, ax2 = plt.subplots(1, 2)
+    _, ax3 = plt.subplots(1, 2)
+    _, ax4 = plt.subplots(1, 2)
+    _, ax5 = plt.subplots(1, 2)
+
+    # axes =
+
     plt.ion()
+
     with tf.Session() as sess:
         sess.run(init)
         writer = tf.summary.FileWriter("./tensorboard_graph/"+modelname)
@@ -147,6 +157,9 @@ if __name__ == "__main__":
                     dots += 1
 
                 batch_x, batch_y = get_data.next_batch()
+                print("running batch")
+                print("shape: ", np.shape(batch_x))
+
                 sess.run(train, feed_dict={x: batch_x, y_true: batch_y})
 
             print("")
@@ -171,17 +184,23 @@ if __name__ == "__main__":
             writer.flush()
 
             # update the plot
-            for ax, index in zip([ax1, ax2], [1, 2]):
+            batch_x_train, batch_y_train = get_data.evaluate_on_train_data()
+            for ax, index in zip([ax1, ax2, ax3, ax4, ax5], [0, 1, 2, 3, 4]):
+
+                mse = sess.run(loss, feed_dict={x: batch_x_train[index].reshape(1, -1), y_true: batch_y_train[index].reshape(1, -1)})
                 ax[0].cla()
                 ax[0].plot(t, predictions[index, :128], color="blue")
                 ax[0].plot(t, predictions[index, 128:], color="red")
                 ax[0].set_title("prediction [train set]")
+                ax[0].text(0.5, 0.5, "MSE: "+str(mse), transform=ax[0].transAxes, backgroundcolor='white')
+                ax[0].text(0.5, 0.8, "Epoch : {}".format(i + 1), transform=ax[0].transAxes, backgroundcolor='white')
                 ax[1].cla()
                 ax[1].plot(t, batch_y_test[index, :128], color="blue")
                 ax[1].plot(t, batch_y_test[index, 128:], color="red")
                 ax[1].set_title("actual [train set]")
 
             plt.show()
+            # plt.pause(10)
             plt.pause(0.001)
 
             # return the index to 0
