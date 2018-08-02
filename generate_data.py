@@ -48,8 +48,8 @@ if __name__ == '__main__':
 
 
     # populate file
-    print('generating samples')
-    n_samples = 60000
+    print('generating train samples')
+    n_samples = 1000
     hdf5_file = tables.open_file('frogtrainingdata.hdf5', mode='a')
     for i in range(n_samples):
 
