@@ -6,7 +6,7 @@ from sys import getsizeof
 from generate_data import retrieve_data
 import time
 from frognet1 import plot_frog
-
+import os
 
 class GetData():
     def __init__(self, batch_size):
@@ -61,6 +61,81 @@ class GetData():
         hdf5_file.close()
 
         return frog_eval, E_appended_eval
+
+
+def plot_predictions(x_in, y_in, axis, fig, set, modelname, epoch):
+
+    mses = []
+    predictions = sess.run(y_pred, feed_dict={x: x_in,
+                                              y_true: y_in})
+
+    for ax, index in zip([0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5]):
+
+        mse = sess.run(loss, feed_dict={x: x_in[index].reshape(1, -1),
+                                        y_true: y_in[index].reshape(1, -1)})
+        mses.append(mse)
+
+        # plot E(t) retrieved
+        axis[0][ax].cla()
+        axis[0][ax].plot(t, predictions[index, :128], color="blue")
+        axis[0][ax].plot(t, predictions[index, 128:], color="red")
+        axis[0][ax].text(0.1, 0.1, "MSE: "+str(mse),
+                        transform=axis[0][ax].transAxes, backgroundcolor='white')
+        axis[0][ax].text(0.1, 1.1, "Epoch : {}".format(i + 1),
+                        transform=axis[0][ax].transAxes, backgroundcolor='white')
+        axis[0][ax].text(0.1, 1, "prediction ["+set+" set]", transform=axis[0][ax].transAxes,
+                         backgroundcolor='white')
+
+
+        # plot retieved FROG
+        E_pred = np.array(predictions[index, :128]) + 1j * np.array(predictions[index, 128:])
+        frogtrace, _, _ = plot_frog(E=E_pred, t=t, w=w, dt=dt, w0=w0, plot=False)
+        axis[1][ax].pcolormesh(frogtrace, cmap="jet")
+        axis[1][ax].text(0.1, 1, "reconstructed frog trace", transform=axis[1][ax].transAxes,
+                        backgroundcolor='white')
+
+        # plot E(t) retrieved
+        axis[2][ax].cla()
+        axis[2][ax].plot(t, y_in[index, :128], color="blue")
+        axis[2][ax].plot(t, y_in[index, 128:], color="red")
+        axis[2][ax].text(0.1, 1, "actual ["+set+" set]", transform=axis[2][ax].transAxes,
+                         backgroundcolor='white')
+
+        # plot  actual FROG
+        axis[3][ax].pcolormesh(x_in[index].reshape(58, 106), cmap='jet')
+        axis[3][ax].text(0.1, 1, "actual frog trace", transform=axis[3][ax].transAxes,
+                        backgroundcolor='white')
+
+        # set all x labels to none
+        for index in range(4):
+            for index2 in range(6):
+                axis[index][index2].set_xticks([])
+                axis[index][index2].set_yticks([])
+
+    print("mses: ", mses)
+    print("avg : ", (1/len(mses))*np.sum(np.array(mses)))
+
+    # save image
+    dir = "/home/zom/PythonProjects/frog_simulation_machinelearning/pictures/"+modelname+"/"+set+"/"
+    if not os.path.isdir(dir):
+        os.makedirs(dir)
+    fig.savefig(dir+str(epoch)+".png")
+
+
+    #fig.savefig("./1.png")
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def init_weights(shape):
@@ -135,11 +210,16 @@ epochs = 5000
 print("5000 epoch")
 
 if __name__ == "__main__":
-    modelname = "paper_1000_samples_1"
+    modelname = "paper_2000_samples_1"
 
     # create figures to visualize predictions in realtime
-    _, ax1 = plt.subplots(4, 6, figsize=(16, 10))
+    fig1, ax1 = plt.subplots(4, 6, figsize=(14, 8))
+    plt.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.05,
+                        wspace=0.1, hspace=0.1)
 
+    fig2, ax2 = plt.subplots(4, 6, figsize=(14, 8))
+    plt.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.05,
+                        wspace=0.1, hspace=0.1)
     # axes =
 
     plt.ion()
@@ -162,9 +242,6 @@ if __name__ == "__main__":
                     dots += 1
 
                 batch_x, batch_y = get_data.next_batch()
-                #print("running batch")
-                #print("shape: ", np.shape(batch_x))
-                #time.sleep(3)
 
                 sess.run(train, feed_dict={x: batch_x, y_true: batch_y})
 
@@ -184,49 +261,24 @@ if __name__ == "__main__":
 
             writer.flush()
 
-            predictions = sess.run(y_pred, feed_dict={x: batch_x_train, y_true: batch_y_train})
-            if (i+1) % 100 == 0:
+            # every x steps plot predictions
+            if (i+1) % 1 == 0:
 
                 # update the plot
-                mses = []
+
                 batch_x_train, batch_y_train = get_data.evaluate_on_train_data()
-                for ax, index in zip([0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5]):
-
-                    mse = sess.run(loss, feed_dict={x: batch_x_train[index].reshape(1, -1), y_true: batch_y_train[index].reshape(1, -1)})
-                    mses.append(mse)
-
-                    # plot E(t) retrieved
-                    ax1[0][ax].cla()
-                    ax1[0][ax].plot(t, predictions[index, :128], color="blue")
-                    ax1[0][ax].plot(t, predictions[index, 128:], color="red")
-                    ax1[0][ax].set_title("prediction [train set]")
-                    ax1[0][ax].text(0.1, 0.5, "MSE: "+str(mse), transform=ax1[0][ax].transAxes, backgroundcolor='white')
-                    ax1[0][ax].text(0.1, 0.8, "Epoch : {}".format(i + 1), transform=ax1[0][ax].transAxes, backgroundcolor='white')
-
-                    # plot  actual FROG
-                    ax1[3][ax].pcolormesh(batch_x_train[index].reshape(58, 106), cmap='jet')
-                    ax1[3][ax].text(0.1, 0.8, "actual frog trace", transform=ax1[3][ax].transAxes,
-                                    backgroundcolor='white')
+                plot_predictions(x_in=batch_x_train, y_in=batch_y_train, axis=ax1, fig=fig1,
+                                 set="train", modelname=modelname, epoch=i+1)
 
 
-                    # plot E(t) retrieved
-                    ax1[2][ax].cla()
-                    ax1[2][ax].plot(t, batch_y_train[index, :128], color="blue")
-                    ax1[2][ax].plot(t, batch_y_train[index, 128:], color="red")
-                    ax1[2][ax].set_title("actual [train set]")
+                batch_x_test, batch_y_test = get_data.evaluate_on_test_data()
+                plot_predictions(x_in=batch_x_test, y_in=batch_y_test, axis=ax2, fig=fig2,
+                                 set="test", modelname=modelname, epoch=i+1)
 
 
-                    E_pred = np.array(predictions[index, :128]) + 1j * np.array(predictions[index, 128:])
-                    frogtrace, tau_frog, w_frog = plot_frog(E=E_pred, t=t, w=w, dt=dt, w0=w0, plot=False)
-                    ax1[1][ax].pcolormesh(frogtrace, cmap="jet")
-                    ax1[1][ax].text(0.1, 0.8, "reconstructed frog trace", transform=ax1[1][ax].transAxes,
-                                    backgroundcolor='white')
-
-
-                print("mses: ", mses)
-                print("avg : ", (1/len(mses))*np.sum(np.array(mses)))
-
+                plt.ioff()
                 plt.show()
+                exit(0)
                 plt.pause(0.001)
 
             # return the index to 0
