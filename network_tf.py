@@ -36,28 +36,28 @@ class GetData():
 
         return  frog_batch, E_appended_batch
 
-    def evaluate_on_test_data(self):
+    def evaluate_on_test_data(self, samples):
 
         # this is used to evaluate the mean squared error of the data after every epoch
 
         hdf5_file = tables.open_file("frogtestdata.hdf5", mode="r")
-        E_real_eval = hdf5_file.root.E_real[:, :]
-        E_imag_eval = hdf5_file.root.E_imag[:, :]
+        E_real_eval = hdf5_file.root.E_real[:samples, :]
+        E_imag_eval = hdf5_file.root.E_imag[:samples, :]
         E_appended_eval = np.append(E_real_eval, E_imag_eval, 1)
-        frog_eval = hdf5_file.root.frog[:, :]
+        frog_eval = hdf5_file.root.frog[:samples, :]
         hdf5_file.close()
 
         return frog_eval, E_appended_eval
 
-    def evaluate_on_train_data(self):
+    def evaluate_on_train_data(self, samples):
 
         # this is used to evaluate the mean squared error of the data after every epoch
 
         hdf5_file = tables.open_file("frogtrainingdata.hdf5", mode="r")
-        E_real_eval = hdf5_file.root.E_real[:, :]
-        E_imag_eval = hdf5_file.root.E_imag[:, :]
+        E_real_eval = hdf5_file.root.E_real[:samples, :]
+        E_imag_eval = hdf5_file.root.E_imag[:samples, :]
         E_appended_eval = np.append(E_real_eval, E_imag_eval, 1)
-        frog_eval = hdf5_file.root.frog[:, :]
+        frog_eval = hdf5_file.root.frog[:samples, :]
         hdf5_file.close()
 
         return frog_eval, E_appended_eval
@@ -77,18 +77,19 @@ def plot_predictions(x_in, y_in, axis, fig, set, modelname, epoch):
 
         # plot E(t) retrieved
         axis[0][ax].cla()
-        axis[0][ax].plot(t, predictions[index, :128], color="blue")
-        axis[0][ax].plot(t, predictions[index, 128:], color="red")
-        axis[0][ax].text(0.1, 0.1, "MSE: "+str(mse),
+        axis[0][ax].plot(t, predictions[index, :64], color="blue")
+        axis[0][ax].plot(t, predictions[index, 64:], color="red")
+
+        axis[0][ax].text(0.1, 1.3, "Epoch : {}".format(i + 1),
                         transform=axis[0][ax].transAxes, backgroundcolor='white')
-        axis[0][ax].text(0.1, 1.1, "Epoch : {}".format(i + 1),
-                        transform=axis[0][ax].transAxes, backgroundcolor='white')
+        axis[0][ax].text(0.1, 1.15, "MSE: " + str(mse),
+                         transform=axis[0][ax].transAxes, backgroundcolor='white')
         axis[0][ax].text(0.1, 1, "prediction ["+set+" set]", transform=axis[0][ax].transAxes,
                          backgroundcolor='white')
 
 
         # plot retieved FROG
-        E_pred = np.array(predictions[index, :128]) + 1j * np.array(predictions[index, 128:])
+        E_pred = np.array(predictions[index, :64]) + 1j * np.array(predictions[index, 64:])
         frogtrace, _, _ = plot_frog(E=E_pred, t=t, w=w, dt=dt, w0=w0, plot=False)
         axis[1][ax].pcolormesh(frogtrace, cmap="jet")
         axis[1][ax].text(0.1, 1, "reconstructed frog trace", transform=axis[1][ax].transAxes,
@@ -96,13 +97,13 @@ def plot_predictions(x_in, y_in, axis, fig, set, modelname, epoch):
 
         # plot E(t) retrieved
         axis[2][ax].cla()
-        axis[2][ax].plot(t, y_in[index, :128], color="blue")
-        axis[2][ax].plot(t, y_in[index, 128:], color="red")
+        axis[2][ax].plot(t, y_in[index, :64], color="blue")
+        axis[2][ax].plot(t, y_in[index, 64:], color="red")
         axis[2][ax].text(0.1, 1, "actual ["+set+" set]", transform=axis[2][ax].transAxes,
                          backgroundcolor='white')
 
         # plot  actual FROG
-        axis[3][ax].pcolormesh(x_in[index].reshape(58, 106), cmap='jet')
+        axis[3][ax].pcolormesh(x_in[index].reshape(64, 64), cmap='jet')
         axis[3][ax].text(0.1, 1, "actual frog trace", transform=axis[3][ax].transAxes,
                         backgroundcolor='white')
 
@@ -120,22 +121,6 @@ def plot_predictions(x_in, y_in, axis, fig, set, modelname, epoch):
     if not os.path.isdir(dir):
         os.makedirs(dir)
     fig.savefig(dir+str(epoch)+".png")
-
-
-    #fig.savefig("./1.png")
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 def init_weights(shape):
@@ -173,11 +158,11 @@ def normal_full_layer(input_layer, size):
 
 
 # placeholders
-x = tf.placeholder(tf.float32, shape=[None, 6148])
-y_true = tf.placeholder(tf.float32, shape=[None, 256])
+x = tf.placeholder(tf.float32, shape=[None, int(64*64)])
+y_true = tf.placeholder(tf.float32, shape=[None, 128])
 
 # layers
-x_image = tf.reshape(x, [-1, 58, 106, 1])
+x_image = tf.reshape(x, [-1, 64, 64, 1])
 # shape = [sizex, sizey, channels, filters/features]
 convo_1 = convolutional_layer(x_image, shape=[4, 4, 1, 32], activate='none', stride=[2, 2])
 convo_2 = convolutional_layer(convo_1, shape=[2, 2, 32, 32], activate='none', stride=[2, 2])
@@ -188,7 +173,7 @@ convo_3_flat = tf.contrib.layers.flatten(convo_3)
 #full_layer_one = tf.nn.relu(normal_full_layer(convo_3_flat, 512))
 full_layer_one = normal_full_layer(convo_3_flat, 512)
 
-y_pred = normal_full_layer(full_layer_one, 256)
+y_pred = normal_full_layer(full_layer_one, 128)
 
 loss = tf.losses.mean_squared_error(labels=y_true, predictions=y_pred)
 
@@ -198,7 +183,7 @@ train = optimizer.minimize(loss)
 init = tf.global_variables_initializer()
 
 # initialize data object
-get_data = GetData(batch_size=100)
+get_data = GetData(batch_size=1000)
 
 test_mse_tb = tf.summary.scalar("test_mse", loss)
 train_mse_tb = tf.summary.scalar("train_mse", loss)
@@ -210,17 +195,16 @@ epochs = 5000
 print("5000 epoch")
 
 if __name__ == "__main__":
-    modelname = "paper_2000_samples_1"
+    modelname = "paper_60k_6464samples_1"
 
     # create figures to visualize predictions in realtime
     fig1, ax1 = plt.subplots(4, 6, figsize=(14, 8))
-    plt.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.05,
+    plt.subplots_adjust(left=0.05, right=0.95, top=0.92, bottom=0.05,
                         wspace=0.1, hspace=0.1)
 
     fig2, ax2 = plt.subplots(4, 6, figsize=(14, 8))
-    plt.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.05,
+    plt.subplots_adjust(left=0.05, right=0.95, top=0.92, bottom=0.05,
                         wspace=0.1, hspace=0.1)
-    # axes =
 
     plt.ion()
 
@@ -248,13 +232,13 @@ if __name__ == "__main__":
             print("")
 
             # view the mean squared error of the test data
-            batch_x_test, batch_y_test = get_data.evaluate_on_test_data()
+            batch_x_test, batch_y_test = get_data.evaluate_on_test_data(samples=500)
             print("test MSE: ", sess.run(loss, feed_dict={x: batch_x_test, y_true: batch_y_test}), "\n")
             summ = sess.run(test_mse_tb, feed_dict={x: batch_x_test, y_true: batch_y_test})
             writer.add_summary(summ, global_step=i+1)
 
             # view the mean squared error of the train data
-            batch_x_train, batch_y_train = get_data.evaluate_on_train_data()
+            batch_x_train, batch_y_train = get_data.evaluate_on_train_data(samples=500)
             print("train MSE: ", sess.run(loss, feed_dict={x: batch_x_train, y_true: batch_y_train}))
             summ = sess.run(train_mse_tb, feed_dict={x: batch_x_train, y_true: batch_y_train})
             writer.add_summary(summ, global_step=i+1)
@@ -262,24 +246,21 @@ if __name__ == "__main__":
             writer.flush()
 
             # every x steps plot predictions
-            if (i+1) % 1 == 0:
+            if (i+1) % 100 == 0 or (i+1) <=15:
 
                 # update the plot
 
-                batch_x_train, batch_y_train = get_data.evaluate_on_train_data()
+                batch_x_train, batch_y_train = get_data.evaluate_on_train_data(samples=500)
                 plot_predictions(x_in=batch_x_train, y_in=batch_y_train, axis=ax1, fig=fig1,
                                  set="train", modelname=modelname, epoch=i+1)
 
-
-                batch_x_test, batch_y_test = get_data.evaluate_on_test_data()
+                batch_x_test, batch_y_test = get_data.evaluate_on_test_data(samples=500)
                 plot_predictions(x_in=batch_x_test, y_in=batch_y_test, axis=ax2, fig=fig2,
                                  set="test", modelname=modelname, epoch=i+1)
 
-
-                plt.ioff()
                 plt.show()
-                exit(0)
                 plt.pause(0.001)
+
 
             # return the index to 0
             get_data.batch_index = 0

@@ -38,13 +38,6 @@ def plot_frog(E, t, w, dt, w0, plot):
     taumax = 5e-14
     w_max = 1.5e15
 
-    taumin_index = np.argmin(np.abs(tau - -taumax))
-    taumax_index = np.argmin(np.abs(tau - taumax))
-
-    w_min_index = np.argmin(np.abs(w - -w_max))
-    w_max_index = np.argmin(np.abs(w - w_max))
-
-
     if plot:
         fig, ax = plt.subplots(2, 1, figsize=(8, 10))
         # plot FROG trace
@@ -62,18 +55,19 @@ def plot_frog(E, t, w, dt, w0, plot):
         axtwin.plot(t, np.unwrap(np.angle(E)), color='green', label='$\phi (t)$')
         axtwin.legend(loc=1)
 
-        # plt.figure(999)
-        # plt.pcolormesh(frogtrace[w_min_index:w_max_index, taumin_index:taumax_index], cmap='jet')
+    # return square trace
+    middle = int((len(tau) + 1) / 2) - 1
+    upper = int(middle + (len(tau)+1) / 4)
+    lower = int(middle - (len(tau)+1) / 4)
 
-    return frogtrace[w_min_index:w_max_index, taumin_index:taumax_index], tau[taumin_index:taumax_index],\
-           w[w_min_index:w_max_index]
+    return frogtrace[:, lower:upper], tau[lower:upper], w
 
 
 def generateE_phi_vector(plot, phi_w):
 
     N = len(phi_w)
 
-    tmax = 60e-15
+    tmax = 40e-15
     dt = 2 * tmax / N
 
     df = 1 / (dt * N)
@@ -159,17 +153,26 @@ def generate_phi_w(N, nodes, amplitude):
 
 if __name__ == '__main__':
 
-    phi_w = generate_phi_w(N=2**7, nodes=30, amplitude=3)
+    phi_w = generate_phi_w(N=2**6, nodes=20, amplitude=3)
 
-    E, t, w, dt, w0 = generateE_phi_vector(plot=True, phi_w=phi_w)
+    # output 64 time step E
+    E, t, w, dt, w0 = generateE_phi_vector(plot=False, phi_w=phi_w)
+    print(np.shape(E))
 
-    frogtrace, tau, w = plot_frog(E=E, t=t, w=w, dt=dt, w0=w0, plot=True)
-
-    plt.figure(98)
-    plt.pcolormesh(tau, w, frogtrace, cmap='jet')
+    # output 64x64 frog trace
+    frogtrace, tau, w = plot_frog(E=E, t=t, w=w, dt=dt, w0=w0, plot=False)
+    print(np.shape(frogtrace))
+    print(np.shape(tau))
 
     plt.figure(99)
-    plt.plot(t, np.abs(E))
+    plt.pcolormesh(frogtrace, cmap='jet')
+
+    plt.figure(101)
+    plt.pcolormesh(tau, w, frogtrace, cmap='jet')
+
+    fig, ax = plt.subplots()
+    ax.plot(t, np.real(E), color='blue')
+    ax.plot(t, np.imag(E), color='red')
 
     plt.show()
 
