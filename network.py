@@ -52,26 +52,39 @@ model.add(layers.Dense(256))
 
 model.compile(optimizer='adam', loss='mean_squared_error')
 
-
+# read train data
 hdf5_file = tables.open_file('frogtrainingdata.hdf5', mode='r')
-
-index = 99
 E_real = hdf5_file.root.E_real[:, :]
 E_imag = hdf5_file.root.E_imag[:, :]
 frog = hdf5_file.root.frog[:, :]
-
-scaler_E = MinMaxScaler()
-scaler_frog = MinMaxScaler()
-
 E_apended = np.concatenate((E_real, E_imag), 1)
-
 hdf5_file.close()
 
+
+# read test data
+hdf5_file = tables.open_file('frogtestdata.hdf5', mode='r')
+E_real_test = hdf5_file.root.E_real[:, :]
+E_imag_test = hdf5_file.root.E_imag[:, :]
+frog_test = hdf5_file.root.frog[:, :]
+E_apended_test = np.concatenate((E_real_test, E_imag_test), 1)
+hdf5_file.close()
+# scaler_E = MinMaxScaler()
+# scaler_frog = MinMaxScaler()
+
+
 # create logging object
-tbCallback = callbacks.TensorBoard(log_dir="./Graph", histogram_freq=0,
+tbCallback = callbacks.TensorBoard(log_dir="./Graph/bstest_512_1", histogram_freq=0,
                                    write_graph=True, write_images=True)
 
-model.fit(frog.reshape(-1, 58, 106, 1), E_apended, epochs=10, callbacks=[tbCallback])
+model.fit(frog.reshape(-1, 58, 106, 1), E_apended, epochs=100,
+          validation_data=(frog_test.reshape(-1, 58, 106, 1), E_apended_test),
+          callbacks=[tbCallback], batch_size=512)
+
+train_loss = model.evaluate(frog.reshape(-1, 58, 106, 1), E_apended)
+print('train loss: ', train_loss)
+test_loss = model.evaluate(frog_test.reshape(-1, 58, 106, 1), E_apended_test)
+print('test loss: ', test_loss)
+
 model.save('./model.hdf5')
 
 # check with a value from dataset
@@ -101,12 +114,12 @@ def test_sample(index):
 
 test_sample(0)
 test_sample(1)
-test_sample(2)
-test_sample(3)
-test_sample(5)
-test_sample(6)
-test_sample(7)
-test_sample(8)
+# test_sample(2)
+# test_sample(3)
+# test_sample(5)
+# test_sample(6)
+# test_sample(7)
+# test_sample(8)
 
 plt.show()
 
