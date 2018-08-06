@@ -93,42 +93,167 @@ def generateE_phi_vector(plot, phi_w):
 
     E_t_prop = np.fft.fftshift(np.fft.ifft(np.fft.fftshift(E_w_prop)))
 
+    # start ambiguity removal!
+
+    #   first shift the intensity peak to time 0
+    I_peak_index = np.argmax(np.abs(E_t_prop)**2)
+    t_0_index = np.argmin(np.abs(t - 0.0))
+    t_0 = t[t_0_index]
+    steps_diff = t_0_index - I_peak_index
+    E_rolled = np.roll(E_t_prop, steps_diff)
+    #replace rolled points with 0
+    if steps_diff > 0:
+        E_rolled[:steps_diff] = 0
+    if steps_diff < 0:
+        E_rolled[steps_diff:] = 0
+
+    # apply phase shift at time0
+    phi_t_0 = np.unwrap(np.angle(E_rolled))[t_0_index]
+    phi_t_0_constant_vec = phi_t_0 * np.ones_like(E_rolled)
+    E_rolled_phi_corrected = E_rolled * np.exp(-1j * phi_t_0_constant_vec)
+
+    # check if integral of real part on left is greater than right
+
+    integral_left_side = dt * np.sum(np.real(E_rolled_phi_corrected[:t_0_index]))
+    integral_right_side = dt * np.sum(np.real(E_rolled_phi_corrected[t_0_index:]))
+
+    flip = False
+    if integral_right_side > integral_left_side:
+        flip=True
+        flipped_final_E = np.flip(E_rolled_phi_corrected, 0)
+    else:
+        flipped_final_E = E_rolled_phi_corrected[:]
+
+    # round for plotting later
+    integral_right_side = round(integral_right_side, 18)
+    integral_left_side = round(integral_left_side, 18)
+
+    # fourier transform final field
+    flipped_final_E_w = np.fft.fftshift(np.fft.fft(np.fft.fftshift(flipped_final_E)))
+
+    #ft non flipped field
+    E_rolled_phi_corrected_w = np.fft.fftshift(np.fft.fft(np.fft.fftshift(E_rolled_phi_corrected)))
+
     if plot:
 
-        fig, ax = plt.subplots(4, 1, figsize=(8, 10))
+        fig, ax = plt.subplots(6, 2, figsize=(12, 10))
 
-        ax[0].plot(t, np.real(E_t), color='blue')
-        ax[0].plot(t, np.imag(E_t), color='red')
-        ax[0].plot(t, np.abs(E_t), color='black', linestyle='dashed', alpha=0.5)
-        ax[0].set_ylabel('$E(t)$')
-        axtwin = ax[0].twinx()
+        ax[0][0].plot(t, np.real(E_t), color='blue')
+        ax[0][0].plot(t, np.imag(E_t), color='red')
+        ax[0][0].plot(t, np.abs(E_t), color='black', linestyle='dashed', alpha=0.5)
+        ax[0][0].set_ylabel('$E(t)$')
+        axtwin = ax[0][0].twinx()
         axtwin.plot(t, np.unwrap(np.angle(E_t)), color='green')
         axtwin.set_ylabel('$\phi (t)$', color='green')
 
-        ax[1].plot(w, np.real(E_w), color='blue')
-        ax[1].plot(w, np.imag(E_w), color='red')
-        ax[1].plot(w, np.abs(E_w), color='black', linestyle='dashed', alpha=0.5)
-        ax[1].set_ylabel('$E(\omega)$')
-        axtwin = ax[1].twinx()
+        ax[1][0].plot(w, np.real(E_w), color='blue')
+        ax[1][0].plot(w, np.imag(E_w), color='red')
+        ax[1][0].plot(w, np.abs(E_w), color='black', linestyle='dashed', alpha=0.5)
+        ax[1][0].set_ylabel('$E(\omega)$')
+        axtwin = ax[1][0].twinx()
         axtwin.plot(w, np.unwrap(np.angle(E_w)), color='green')
         axtwin.plot(w, phi_w, color='green', linestyle='dashed')
         axtwin.set_ylabel('$\phi (\omega)$', color='green')
 
-        ax[2].plot(w, np.real(E_w_prop), color='blue')
-        ax[2].plot(w, np.imag(E_w_prop), color='red')
-        ax[2].plot(w, np.abs(E_w_prop), color='black', linestyle='dashed', alpha=0.5)
-        ax[2].set_ylabel('$E(\omega)$')
-        axtwin = ax[2].twinx()
+        ax[2][0].plot(w, np.real(E_w_prop), color='blue')
+        ax[2][0].plot(w, np.imag(E_w_prop), color='red')
+        ax[2][0].plot(w, np.abs(E_w_prop), color='black', linestyle='dashed', alpha=0.5)
+        ax[2][0].set_ylabel('$E(\omega)$')
+        axtwin = ax[2][0].twinx()
         axtwin.plot(w, np.unwrap(np.angle(E_w_prop)), color='green')
         axtwin.set_ylabel('$\phi (\omega)$', color='green')
 
-        ax[3].plot(t, np.real(E_t_prop), color='blue')
-        ax[3].plot(t, np.imag(E_t_prop), color='red')
-        ax[3].plot(t, np.abs(E_t_prop), color='black', linestyle='dashed', alpha=0.5)
-        ax[3].set_ylabel('$E(t)$')
-        axtwin = ax[3].twinx()
+        ax[3][0].plot(t, np.real(E_t_prop), color='blue')
+        ax[3][0].plot(t, np.imag(E_t_prop), color='red')
+        ax[3][0].plot(t, np.abs(E_t_prop), color='black', linestyle='dashed', alpha=0.5)
+        ax[3][0].set_ylabel('$E(t)$')
+        axtwin = ax[3][0].twinx()
         axtwin.plot(t, np.unwrap(np.angle(E_t_prop)), color='green')
         axtwin.set_ylabel('$\phi (t)$', color='green')
+
+        ax[0][1].text(0.4, 1.05, 'removing ambuguities', transform=ax[0][1].transAxes)
+        ax[0][1].plot(t, np.real(E_t_prop), color='blue')
+        ax[0][1].plot(t, np.imag(E_t_prop), color='red')
+        ax[0][1].plot(t, np.abs(E_t_prop)**2, color='black', label='intensity')
+        ax[0][1].legend(loc=2)
+        # max intensity marker
+        ax[0][1].plot(t[I_peak_index], 1, marker='o', color='purple')
+        ax[0][1].text(t[I_peak_index+2], 0.8, 'maximum intensity', color='purple')
+        ax[0][1].text(t[1], -0.8, 'center off by {} timesteps'.format(steps_diff))
+        # center marker
+        ax[0][1].plot([t_0, t_0], [-1, 1], color='black', alpha=0.5)
+        print('steps diff: ', steps_diff)
+
+        ax[1][1].plot(t, np.real(E_rolled), color='blue')
+        ax[1][1].plot(t, np.imag(E_rolled), color='red')
+        ax[1][1].plot(t, np.abs(E_rolled)**2, color='black', label='intensity')
+        ax[1][1].plot([t_0, t_0], [-1, 1], color='black', alpha=0.5)
+        ax[1][1].legend(loc=2)
+        # plot phase
+        axtwin = ax[1][1].twinx()
+        axtwin.text(0.6, 0.9, 'intensity peak moved to center', backgroundcolor='white',
+                    transform=axtwin.transAxes)
+        axtwin.plot(t, np.unwrap(np.angle(E_rolled)), color='green')
+        axtwin.set_ylabel('$\phi (t)$', color='green')
+        ax[2][1].plot(t, np.real(E_rolled_phi_corrected), color='blue')
+        ax[2][1].plot(t, np.imag(E_rolled_phi_corrected), color='red')
+        ax[2][1].plot(t, np.abs(E_rolled_phi_corrected)**2, color='black', label='intensity')
+        ax[2][1].plot([t_0, t_0], [-1, 1], color='black', alpha=0.5)
+        axtwin = ax[2][1].twinx()
+        axtwin.plot(t, np.unwrap(np.angle(E_rolled_phi_corrected)), color='green')
+        print('t0 at t0 index: ', t[t_0_index])
+        axtwin.text(0.6, 0.9, 'phase angle at t=0 set to 0', backgroundcolor='white',
+                    transform=axtwin.transAxes)
+        axtwin.set_ylabel('$\phi (t)$', color='green')
+        ax[2][1].legend(loc=2)
+        axtwin.text(0.05, 0,
+                      'left real side integral: {}'.format(integral_left_side),
+                      backgroundcolor='white', transform=ax[2][1].transAxes)
+        axtwin.text(0.05, 0.22,
+                      'right real side integral: {}'.format(integral_right_side),
+                      backgroundcolor='white', transform=ax[2][1].transAxes)
+        axtwin.text(0.8, 0.1, 'Flip:', color='black', transform=ax[2][1].transAxes)
+        if flip:
+            axtwin.text(0.9, 0.1, 'True', color='green', transform=ax[2][1].transAxes,
+                          backgroundcolor='white')
+        else:
+            axtwin.text(0.9, 0.1, 'False', color='red', transform=ax[2][1].transAxes,
+                          backgroundcolor='white')
+
+        ax[3][1].plot(t, np.real(flipped_final_E), color='blue')
+        ax[3][1].plot(t, np.imag(flipped_final_E), color='red')
+        ax[3][1].plot([t_0, t_0], [-1, 1], color='black', alpha=0.5)
+        axtwin = ax[3][1].twinx()
+        axtwin.plot(t, np.unwrap(np.angle(flipped_final_E)), color='green')
+        axtwin.set_ylabel('$\phi (t)$', color='green')
+        axtwin.text(0.6, 0.9, 'final field for testing', transform=ax[3][1].transAxes,
+                    backgroundcolor='white')
+
+        ax[4][1].plot(w, np.real(flipped_final_E_w), color='blue')
+        ax[4][1].plot(w, np.imag(flipped_final_E_w), color='red')
+        ax[4][1].plot(w, np.abs(flipped_final_E_w), color='black', linestyle='dashed',
+                      label='abs')
+        ax[4][1].legend(loc=2)
+        axtwin = ax[4][1].twinx()
+        axtwin.plot(w, np.unwrap(np.angle(flipped_final_E_w)), color='green')
+        axtwin.text(0.55, 0.9, 'fourier transform of flipped field (if flipped)',
+                    transform=axtwin.transAxes, backgroundcolor='white')
+
+        ax[5][1].plot(w, np.real(E_rolled_phi_corrected_w), color='blue')
+        ax[5][1].plot(w, np.imag(E_rolled_phi_corrected_w), color='red')
+        ax[5][1].plot(w, np.abs(E_rolled_phi_corrected_w), color='black', linestyle='dashed',
+                      label='abs')
+        ax[5][1].legend(loc=2)
+        axtwin = ax[5][1].twinx()
+        axtwin.plot(w, np.unwrap(np.angle(E_rolled_phi_corrected_w)), color='green')
+        axtwin.text(0.55, 0.9, 'fourier transform of non - flipped field',
+                    transform=axtwin.transAxes, backgroundcolor='white')
+
+
+
+
+
+
 
 
     return E_t_prop, t, w, dt, w0
@@ -153,12 +278,13 @@ def generate_phi_w(N, nodes, amplitude):
 
 if __name__ == '__main__':
 
-    phi_w = generate_phi_w(N=2**6, nodes=20, amplitude=3)
+    phi_w = generate_phi_w(N=2**6, nodes=15, amplitude=3)
 
     # output 64 time step E
-    E, t, w, dt, w0 = generateE_phi_vector(plot=False, phi_w=phi_w)
+    E, t, w, dt, w0 = generateE_phi_vector(plot=True, phi_w=phi_w)
     print(np.shape(E))
-
+    plt.show()
+    exit(0)
     # output 64x64 frog trace
     frogtrace, tau, w = plot_frog(E=E, t=t, w=w, dt=dt, w0=w0, plot=False)
     print(np.shape(frogtrace))
