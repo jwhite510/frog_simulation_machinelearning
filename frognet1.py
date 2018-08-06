@@ -77,9 +77,9 @@ def generateE_phi_vector(plot, phi_w):
     w = 2 * np.pi * df * np.arange(-N/2, N/2, 1)
 
     # for testing with GVD and TOD
-    # GVD = 0e-30
-    # TOD = 10e-45
-    # phi_w = GVD * w**2 + TOD * w**3
+    # GVD = 10e-30
+    # TOD = 5e-45
+    # phi_w = GVD * w**2 - TOD * w**3
 
     # define pulse in time
     tau = 5e-15
@@ -94,7 +94,6 @@ def generateE_phi_vector(plot, phi_w):
     E_t_prop = np.fft.fftshift(np.fft.ifft(np.fft.fftshift(E_w_prop)))
 
     # start ambiguity removal!
-
     #   first shift the intensity peak to time 0
     I_peak_index = np.argmax(np.abs(E_t_prop)**2)
     t_0_index = np.argmin(np.abs(t - 0.0))
@@ -115,26 +114,34 @@ def generateE_phi_vector(plot, phi_w):
     # check if integral of real part on left is greater than right
 
     integral_left_side = dt * np.sum(np.real(E_rolled_phi_corrected[:t_0_index]))
-    integral_right_side = dt * np.sum(np.real(E_rolled_phi_corrected[t_0_index:]))
+    integral_right_side = dt * np.sum(np.real(E_rolled_phi_corrected[t_0_index+1:]))
+
+    # make flip always by setting to one
+    # integral_right_side = 1
+    #######
 
     flip = False
     if integral_right_side > integral_left_side:
         flip=True
         flipped_final_E = np.flip(E_rolled_phi_corrected, 0)
+        # roll by one, because of flip with even number of timesteps
+        flipped_final_E = np.roll(flipped_final_E, 1)
+        flipped_final_E[:1] = 0
+
     else:
         flipped_final_E = E_rolled_phi_corrected[:]
 
-    # round for plotting later
-    integral_right_side = round(integral_right_side, 18)
-    integral_left_side = round(integral_left_side, 18)
-
-    # fourier transform final field
-    flipped_final_E_w = np.fft.fftshift(np.fft.fft(np.fft.fftshift(flipped_final_E)))
-
-    #ft non flipped field
-    E_rolled_phi_corrected_w = np.fft.fftshift(np.fft.fft(np.fft.fftshift(E_rolled_phi_corrected)))
-
     if plot:
+
+        # round for plotting later
+        integral_right_side = round(integral_right_side, 18)
+        integral_left_side = round(integral_left_side, 18)
+
+        # fourier transform final field
+        flipped_final_E_w = np.fft.fftshift(np.fft.fft(np.fft.fftshift(flipped_final_E)))
+
+        # ft non flipped field
+        E_rolled_phi_corrected_w = np.fft.fftshift(np.fft.fft(np.fft.fftshift(E_rolled_phi_corrected)))
 
         fig, ax = plt.subplots(6, 2, figsize=(12, 10))
 
@@ -143,6 +150,10 @@ def generateE_phi_vector(plot, phi_w):
         ax[0][0].plot(t, np.abs(E_t), color='black', linestyle='dashed', alpha=0.5)
         ax[0][0].set_ylabel('$E(t)$')
         axtwin = ax[0][0].twinx()
+        axtwin.text(0.4, 1.15, 'Generation of sample $E(t)$', transform=axtwin.transAxes,
+                    backgroundcolor='yellow')
+        axtwin.text(0.55, 0.90, 'Initially transform limited pulse $E(t)$', transform=axtwin.transAxes,
+                    backgroundcolor='white')
         axtwin.plot(t, np.unwrap(np.angle(E_t)), color='green')
         axtwin.set_ylabel('$\phi (t)$', color='green')
 
@@ -151,15 +162,19 @@ def generateE_phi_vector(plot, phi_w):
         ax[1][0].plot(w, np.abs(E_w), color='black', linestyle='dashed', alpha=0.5)
         ax[1][0].set_ylabel('$E(\omega)$')
         axtwin = ax[1][0].twinx()
+        axtwin.text(0.55, 0.90, 'Fourier transformed \n random phase generated', transform=axtwin.transAxes,
+                    backgroundcolor='white')
         axtwin.plot(w, np.unwrap(np.angle(E_w)), color='green')
-        axtwin.plot(w, phi_w, color='green', linestyle='dashed')
+        axtwin.plot(w, phi_w, color='green', linestyle='dashed', label='random phase $\phi(\omega)$')
         axtwin.set_ylabel('$\phi (\omega)$', color='green')
-
+        axtwin.legend(loc=2)
         ax[2][0].plot(w, np.real(E_w_prop), color='blue')
         ax[2][0].plot(w, np.imag(E_w_prop), color='red')
         ax[2][0].plot(w, np.abs(E_w_prop), color='black', linestyle='dashed', alpha=0.5)
         ax[2][0].set_ylabel('$E(\omega)$')
         axtwin = ax[2][0].twinx()
+        axtwin.text(0.55, 0.90, 'Random phase applied', transform=axtwin.transAxes,
+                    backgroundcolor='white')
         axtwin.plot(w, np.unwrap(np.angle(E_w_prop)), color='green')
         axtwin.set_ylabel('$\phi (\omega)$', color='green')
 
@@ -168,10 +183,13 @@ def generateE_phi_vector(plot, phi_w):
         ax[3][0].plot(t, np.abs(E_t_prop), color='black', linestyle='dashed', alpha=0.5)
         ax[3][0].set_ylabel('$E(t)$')
         axtwin = ax[3][0].twinx()
+        axtwin.text(0.55, 0.90, 'Fourier transform back to time', transform=axtwin.transAxes,
+                    backgroundcolor='white')
         axtwin.plot(t, np.unwrap(np.angle(E_t_prop)), color='green')
         axtwin.set_ylabel('$\phi (t)$', color='green')
 
-        ax[0][1].text(0.4, 1.05, 'removing ambuguities', transform=ax[0][1].transAxes)
+        ax[0][1].text(0.4, 1.15, 'Removing ambuguities', transform=ax[0][1].transAxes,
+                      backgroundcolor='yellow')
         ax[0][1].plot(t, np.real(E_t_prop), color='blue')
         ax[0][1].plot(t, np.imag(E_t_prop), color='red')
         ax[0][1].plot(t, np.abs(E_t_prop)**2, color='black', label='intensity')
@@ -179,7 +197,7 @@ def generateE_phi_vector(plot, phi_w):
         # max intensity marker
         ax[0][1].plot(t[I_peak_index], 1, marker='o', color='purple')
         ax[0][1].text(t[I_peak_index+2], 0.8, 'maximum intensity', color='purple')
-        ax[0][1].text(t[1], -0.8, 'center off by {} timesteps'.format(steps_diff))
+        ax[0][1].text(t[0], -0.8, '$I(t)$ peak off by {} timesteps'.format(steps_diff))
         # center marker
         ax[0][1].plot([t_0, t_0], [-1, 1], color='black', alpha=0.5)
         print('steps diff: ', steps_diff)
@@ -206,28 +224,35 @@ def generateE_phi_vector(plot, phi_w):
                     transform=axtwin.transAxes)
         axtwin.set_ylabel('$\phi (t)$', color='green')
         ax[2][1].legend(loc=2)
-        axtwin.text(0.05, 0,
+        axtwin.text(-0.05, 0,
                       'left real side integral: {}'.format(integral_left_side),
                       backgroundcolor='white', transform=ax[2][1].transAxes)
-        axtwin.text(0.05, 0.22,
+        axtwin.text(-0.05, 0.22,
                       'right real side integral: {}'.format(integral_right_side),
                       backgroundcolor='white', transform=ax[2][1].transAxes)
+        axtwin.text(0.6, 0.12, '------->', transform=ax[2][1].transAxes, backgroundcolor='white')
+
         axtwin.text(0.8, 0.1, 'Flip:', color='black', transform=ax[2][1].transAxes)
         if flip:
-            axtwin.text(0.9, 0.1, 'True', color='green', transform=ax[2][1].transAxes,
-                          backgroundcolor='white')
+            axtwin.text(0.9, 0.1, 'True', color='black', transform=ax[2][1].transAxes,
+                          backgroundcolor='green')
         else:
-            axtwin.text(0.9, 0.1, 'False', color='red', transform=ax[2][1].transAxes,
-                          backgroundcolor='white')
+            axtwin.text(0.9, 0.1, 'False', color='black', transform=ax[2][1].transAxes,
+                          backgroundcolor='red')
 
         ax[3][1].plot(t, np.real(flipped_final_E), color='blue')
         ax[3][1].plot(t, np.imag(flipped_final_E), color='red')
+        ax[3][1].plot(t, np.abs(flipped_final_E)**2, color='black', label='intensity')
         ax[3][1].plot([t_0, t_0], [-1, 1], color='black', alpha=0.5)
+        ax[3][1].legend(loc=2)
         axtwin = ax[3][1].twinx()
         axtwin.plot(t, np.unwrap(np.angle(flipped_final_E)), color='green')
         axtwin.set_ylabel('$\phi (t)$', color='green')
-        axtwin.text(0.6, 0.9, 'final field for testing', transform=ax[3][1].transAxes,
+        axtwin.text(0.6, 0.9, 'flipped, final field for testing', transform=ax[3][1].transAxes,
                     backgroundcolor='white')
+
+        # plot the spectrum and spectral phase of E(t) and time reversed E(t)
+        crop_phase = 15
 
         ax[4][1].plot(w, np.real(flipped_final_E_w), color='blue')
         ax[4][1].plot(w, np.imag(flipped_final_E_w), color='red')
@@ -235,7 +260,7 @@ def generateE_phi_vector(plot, phi_w):
                       label='abs')
         ax[4][1].legend(loc=2)
         axtwin = ax[4][1].twinx()
-        axtwin.plot(w, np.unwrap(np.angle(flipped_final_E_w)), color='green')
+        axtwin.plot(w[crop_phase:-crop_phase], np.unwrap(np.angle(flipped_final_E_w))[crop_phase:-crop_phase], color='green')
         axtwin.text(0.55, 0.9, 'fourier transform of flipped field (if flipped)',
                     transform=axtwin.transAxes, backgroundcolor='white')
 
@@ -245,18 +270,22 @@ def generateE_phi_vector(plot, phi_w):
                       label='abs')
         ax[5][1].legend(loc=2)
         axtwin = ax[5][1].twinx()
-        axtwin.plot(w, np.unwrap(np.angle(E_rolled_phi_corrected_w)), color='green')
+        axtwin.plot(w[crop_phase:-crop_phase], np.unwrap(np.angle(E_rolled_phi_corrected_w))[crop_phase:-crop_phase], color='green')
         axtwin.text(0.55, 0.9, 'fourier transform of non - flipped field',
                     transform=axtwin.transAxes, backgroundcolor='white')
 
+        # add numbers to plots
+        for i, number in zip(range(4), [1, 2, 3, 4]):
+            ax[i][0].text(0, 1, str(number), transform=ax[i][0].transAxes,
+                          backgroundcolor='red')
+
+        for i, number in zip(range(4), [5, 6, 7, 8]):
+            ax[i][1].text(0, 1, str(number), transform=ax[i][1].transAxes,
+                          backgroundcolor='red')
 
 
 
-
-
-
-
-    return E_t_prop, t, w, dt, w0
+    return flipped_final_E, t, w, dt, w0
 
 
 def generate_phi_w(N, nodes, amplitude):
@@ -278,17 +307,15 @@ def generate_phi_w(N, nodes, amplitude):
 
 if __name__ == '__main__':
 
-    phi_w = generate_phi_w(N=2**6, nodes=15, amplitude=0)
+    phi_w = generate_phi_w(N=2**6, nodes=15, amplitude=3)
 
     # output 64 time step E
-    E, t, w, dt, w0 = generateE_phi_vector(plot=True, phi_w=phi_w)
-    print(np.shape(E))
-    plt.show()
-    exit(0)
+    E, t, w, dt, w0 = generateE_phi_vector(plot=False, phi_w=phi_w)
+    # print(np.shape(E))
     # output 64x64 frog trace
     frogtrace, tau, w = plot_frog(E=E, t=t, w=w, dt=dt, w0=w0, plot=False)
-    print(np.shape(frogtrace))
-    print(np.shape(tau))
+    # print(np.shape(frogtrace))
+    # print(np.shape(tau))
 
     plt.figure(99)
     plt.pcolormesh(frogtrace, cmap='jet')
