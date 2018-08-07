@@ -7,6 +7,7 @@ from generate_data import retrieve_data
 import time
 from frognet1 import plot_frog
 import os
+import random
 
 class GetData():
     def __init__(self, batch_size):
@@ -15,7 +16,7 @@ class GetData():
         self.batch_index = 0
         self.batch_size = batch_size
 
-        hdf5_file = tables.open_file("frogtrainingdata.hdf5", mode="r")
+        hdf5_file = tables.open_file("frogtrainingdata_noambiguities.hdf5", mode="r")
         frog = hdf5_file.root.frog[:, :]
         self.samples = np.shape(frog)[0]
 
@@ -25,7 +26,7 @@ class GetData():
 
         # retrieve the next batch of data from the data source
 
-        hdf5_file = tables.open_file("frogtrainingdata.hdf5", mode="r")
+        hdf5_file = tables.open_file("frogtrainingdata_noambiguities.hdf5", mode="r")
         E_real_batch = hdf5_file.root.E_real[self.batch_index:self.batch_index+self.batch_size, :]
         E_imag_batch = hdf5_file.root.E_imag[self.batch_index:self.batch_index+self.batch_size, :]
         E_appended_batch = np.append(E_real_batch, E_imag_batch, 1)
@@ -36,11 +37,34 @@ class GetData():
 
         return  frog_batch, E_appended_batch
 
+    def next_batch_random(self):
+
+        # generate random indexes for the batch
+
+        # make a vector of random integers between 0 and samples-1
+        indexes = random.sample(range(self.samples), self.batch_size)
+        hdf5_file = tables.open_file("frogtrainingdata_noambiguities.hdf5", mode="r")
+        E_real_batch = hdf5_file.root.E_real[indexes, :]
+        E_imag_batch = hdf5_file.root.E_imag[indexes, :]
+        E_appended_batch = np.append(E_real_batch, E_imag_batch, 1)
+        frog_batch = hdf5_file.root.frog[indexes, :]
+        hdf5_file.close()
+
+        self.batch_index += self.batch_size
+
+        return  frog_batch, E_appended_batch
+
+
+
+
+
+
+
     def evaluate_on_test_data(self, samples):
 
         # this is used to evaluate the mean squared error of the data after every epoch
 
-        hdf5_file = tables.open_file("frogtestdata.hdf5", mode="r")
+        hdf5_file = tables.open_file("frogtestdata_noambiguities.hdf5", mode="r")
         E_real_eval = hdf5_file.root.E_real[:samples, :]
         E_imag_eval = hdf5_file.root.E_imag[:samples, :]
         E_appended_eval = np.append(E_real_eval, E_imag_eval, 1)
@@ -53,7 +77,7 @@ class GetData():
 
         # this is used to evaluate the mean squared error of the data after every epoch
 
-        hdf5_file = tables.open_file("frogtrainingdata.hdf5", mode="r")
+        hdf5_file = tables.open_file("frogtrainingdata_noambiguities.hdf5", mode="r")
         E_real_eval = hdf5_file.root.E_real[:samples, :]
         E_imag_eval = hdf5_file.root.E_imag[:samples, :]
         E_appended_eval = np.append(E_real_eval, E_imag_eval, 1)
@@ -183,7 +207,7 @@ train = optimizer.minimize(loss)
 init = tf.global_variables_initializer()
 
 # initialize data object
-get_data = GetData(batch_size=1000)
+get_data = GetData(batch_size=32)
 
 test_mse_tb = tf.summary.scalar("test_mse", loss)
 train_mse_tb = tf.summary.scalar("train_mse", loss)
@@ -195,7 +219,7 @@ epochs = 5000
 print("5000 epoch")
 
 if __name__ == "__main__":
-    modelname = "paper_60k_6464samples_1"
+    modelname = "paper_60k_6464samples_noambg1_batchsize32"
 
     # create figures to visualize predictions in realtime
     fig1, ax1 = plt.subplots(4, 6, figsize=(14, 8))
@@ -225,8 +249,10 @@ if __name__ == "__main__":
                     print(".", end="", flush=True)
                     dots += 1
 
-                batch_x, batch_y = get_data.next_batch()
-
+                #batch_x, batch_y = get_data.next_batch()
+                # retrieve random samples
+                batch_x, batch_y = get_data.next_batch_random()
+                #print('batch retrieved')
                 sess.run(train, feed_dict={x: batch_x, y_true: batch_y})
 
             print("")
