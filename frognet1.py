@@ -112,9 +112,9 @@ def generateE_phi_vector(plot, phi_w):
     E_rolled_phi_corrected = E_rolled * np.exp(-1j * phi_t_0_constant_vec)
 
     # check if integral of real part on left is greater than right
-
-    integral_left_side = dt * np.sum(np.real(E_rolled_phi_corrected[:t_0_index]))
-    integral_right_side = dt * np.sum(np.real(E_rolled_phi_corrected[t_0_index+1:]))
+    # try using absolute integral
+    integral_left_side = dt * np.sum(np.abs(np.real(E_rolled_phi_corrected[:t_0_index])))
+    integral_right_side = dt * np.sum(np.abs(np.real(E_rolled_phi_corrected[t_0_index+1:])))
 
     # make flip always by setting to one
     # integral_right_side = 1

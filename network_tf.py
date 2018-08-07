@@ -227,7 +227,7 @@ epochs = 5000
 print("5000 epoch")
 
 if __name__ == "__main__":
-    modelname = "60k_samples_leaky_dropout_randindexes_batchsize500"
+    modelname = "60k_samples_leaky_dropout_notrandindexes_batchsize500"
 
     # create figures to visualize predictions in realtime
     fig1, ax1 = plt.subplots(4, 6, figsize=(14, 8))
@@ -257,9 +257,9 @@ if __name__ == "__main__":
                     print(".", end="", flush=True)
                     dots += 1
 
-                #batch_x, batch_y = get_data.next_batch()
+                batch_x, batch_y = get_data.next_batch()
                 # retrieve random samples
-                batch_x, batch_y = get_data.next_batch_random()
+                #batch_x, batch_y = get_data.next_batch_random()
                 #print('batch retrieved')
                 sess.run(train, feed_dict={x: batch_x, y_true: batch_y})
 
