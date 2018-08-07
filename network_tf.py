@@ -169,6 +169,9 @@ def convolutional_layer(input_x, shape, activate, stride):
     if activate == 'relu':
         return tf.nn.relu(conv2d(input_x, W, stride) + b)
 
+    if activate == 'leaky':
+        return tf.nn.leaky_relu(conv2d(input_x, W, stride) + b)
+
     elif activate == 'none':
         return conv2d(input_x, W, stride) + b
 
@@ -190,14 +193,19 @@ x_image = tf.reshape(x, [-1, 64, 64, 1])
 # shape = [sizex, sizey, channels, filters/features]
 convo_1 = convolutional_layer(x_image, shape=[4, 4, 1, 32], activate='none', stride=[2, 2])
 convo_2 = convolutional_layer(convo_1, shape=[2, 2, 32, 32], activate='none', stride=[2, 2])
-convo_3 = convolutional_layer(convo_2, shape=[1, 1, 32, 32], activate='relu', stride=[1, 1])
+convo_3 = convolutional_layer(convo_2, shape=[1, 1, 32, 32], activate='leaky', stride=[1, 1])
 
 #convo_3_flat = tf.reshape(convo_3, [-1, 58*106*32])
 convo_3_flat = tf.contrib.layers.flatten(convo_3)
 #full_layer_one = tf.nn.relu(normal_full_layer(convo_3_flat, 512))
 full_layer_one = normal_full_layer(convo_3_flat, 512)
 
-y_pred = normal_full_layer(full_layer_one, 128)
+#dropout
+hold_prob = tf.constant(0.5, dtype=tf.float32)
+dropout_layer = tf.nn.dropout(full_layer_one, keep_prob=hold_prob)
+
+y_pred = normal_full_layer(dropout_layer, 128)
+#y_pred = normal_full_layer(full_layer_one, 128)
 
 loss = tf.losses.mean_squared_error(labels=y_true, predictions=y_pred)
 
@@ -207,7 +215,7 @@ train = optimizer.minimize(loss)
 init = tf.global_variables_initializer()
 
 # initialize data object
-get_data = GetData(batch_size=32)
+get_data = GetData(batch_size=500)
 
 test_mse_tb = tf.summary.scalar("test_mse", loss)
 train_mse_tb = tf.summary.scalar("train_mse", loss)
@@ -219,7 +227,7 @@ epochs = 5000
 print("5000 epoch")
 
 if __name__ == "__main__":
-    modelname = "paper_60k_6464samples_noambg1_batchsize32"
+    modelname = "60k_samples_leaky_dropout_randindexes_batchsize500"
 
     # create figures to visualize predictions in realtime
     fig1, ax1 = plt.subplots(4, 6, figsize=(14, 8))
