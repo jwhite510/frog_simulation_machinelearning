@@ -16,7 +16,7 @@ class GetData():
         self.batch_index = 0
         self.batch_size = batch_size
 
-        hdf5_file = tables.open_file("frogtrainingdata_noambiguities.hdf5", mode="r")
+        hdf5_file = tables.open_file("frogtrainingdata.hdf5", mode="r")
         frog = hdf5_file.root.frog[:, :]
         self.samples = np.shape(frog)[0]
 
@@ -26,7 +26,7 @@ class GetData():
 
         # retrieve the next batch of data from the data source
 
-        hdf5_file = tables.open_file("frogtrainingdata_noambiguities.hdf5", mode="r")
+        hdf5_file = tables.open_file("frogtrainingdata.hdf5", mode="r")
         E_real_batch = hdf5_file.root.E_real[self.batch_index:self.batch_index+self.batch_size, :]
         E_imag_batch = hdf5_file.root.E_imag[self.batch_index:self.batch_index+self.batch_size, :]
         E_appended_batch = np.append(E_real_batch, E_imag_batch, 1)
@@ -43,7 +43,7 @@ class GetData():
 
         # make a vector of random integers between 0 and samples-1
         indexes = random.sample(range(self.samples), self.batch_size)
-        hdf5_file = tables.open_file("frogtrainingdata_noambiguities.hdf5", mode="r")
+        hdf5_file = tables.open_file("frogtrainingdata.hdf5", mode="r")
         E_real_batch = hdf5_file.root.E_real[indexes, :]
         E_imag_batch = hdf5_file.root.E_imag[indexes, :]
         E_appended_batch = np.append(E_real_batch, E_imag_batch, 1)
@@ -55,16 +55,11 @@ class GetData():
         return  frog_batch, E_appended_batch
 
 
-
-
-
-
-
     def evaluate_on_test_data(self, samples):
 
         # this is used to evaluate the mean squared error of the data after every epoch
 
-        hdf5_file = tables.open_file("frogtestdata_noambiguities.hdf5", mode="r")
+        hdf5_file = tables.open_file("frogtestdata.hdf5", mode="r")
         E_real_eval = hdf5_file.root.E_real[:samples, :]
         E_imag_eval = hdf5_file.root.E_imag[:samples, :]
         E_appended_eval = np.append(E_real_eval, E_imag_eval, 1)
@@ -77,7 +72,7 @@ class GetData():
 
         # this is used to evaluate the mean squared error of the data after every epoch
 
-        hdf5_file = tables.open_file("frogtrainingdata_noambiguities.hdf5", mode="r")
+        hdf5_file = tables.open_file("frogtrainingdata.hdf5", mode="r")
         E_real_eval = hdf5_file.root.E_real[:samples, :]
         E_imag_eval = hdf5_file.root.E_imag[:samples, :]
         E_appended_eval = np.append(E_real_eval, E_imag_eval, 1)
@@ -201,7 +196,7 @@ convo_3_flat = tf.contrib.layers.flatten(convo_3)
 full_layer_one = normal_full_layer(convo_3_flat, 512)
 
 #dropout
-hold_prob = tf.constant(0.5, dtype=tf.float32)
+hold_prob = tf.constant(0.1, dtype=tf.float32)
 dropout_layer = tf.nn.dropout(full_layer_one, keep_prob=hold_prob)
 
 y_pred = normal_full_layer(dropout_layer, 128)
@@ -223,11 +218,11 @@ _, t, w, dt, w0, _ = retrieve_data(plot_frog_bool=False, print_size=False)
 saver = tf.train.Saver()
 
 #epochs = 500
-epochs = 5000
-print("5000 epoch")
+epochs = 1000
+print("1000 epoch")
 
 if __name__ == "__main__":
-    modelname = "60k_samples_leaky_dropout_notrandindexes_batchsize500"
+    modelname = "60k_samples_leaky_dropout_withflip"
 
     # create figures to visualize predictions in realtime
     fig1, ax1 = plt.subplots(4, 6, figsize=(14, 8))
@@ -242,7 +237,7 @@ if __name__ == "__main__":
 
     with tf.Session() as sess:
         sess.run(init)
-        writer = tf.summary.FileWriter("./tensorboard_graph/"+modelname)
+        writer = tf.summary.FileWriter("./tensorboard_graph2/"+modelname)
         # summaries = tf.summary.merge_all()
 
         for i in range(epochs):
@@ -252,15 +247,19 @@ if __name__ == "__main__":
             dots = 0
             while get_data.batch_index < get_data.samples:
 
+                # display loading bar
                 percent = 50 * get_data.batch_index / get_data.samples
                 if percent - dots > 1:
                     print(".", end="", flush=True)
                     dots += 1
 
+                # retrieve data
                 batch_x, batch_y = get_data.next_batch()
+
                 # retrieve random samples
                 #batch_x, batch_y = get_data.next_batch_random()
-                #print('batch retrieved')
+
+                #train network
                 sess.run(train, feed_dict={x: batch_x, y_true: batch_y})
 
             print("")

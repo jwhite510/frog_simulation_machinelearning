@@ -8,46 +8,73 @@ from frognet1 import plot_frog
 import os
 
 
-def plot_frog_and_E(frog, E, title, mse):
+def plot_frog_and_E(frog, E, title, mse, integrate):
     # plot the comparing trace and field
     fig, ax = plt.subplots(1, 2, figsize=(8, 5))
     t_0_index = np.argmin(np.abs(t - 0.0))
 
-    ax[0].set_title(title)
-    ax[0].plot(t, np.real(E), color='blue')
-    ax[0].plot(t, np.imag(E), color='red')
-    ax[0].plot(t, np.abs(E), color='black', linestyle='dashed')
+    # plot horizontal and vertical lines
     ax[0].plot([0, 0], [-1, 1], color='black', alpha=0.5)
+    ax[0].plot([t[0], t[-1]], [0, 0], color='black', alpha=0.5)
 
+    # plot real, imag and abs E
+    ax[0].plot(t, np.real(E), color='blue', label='real $E(t)$', linewidth=2)
+    ax[0].plot(t, np.imag(E), color='red', label='imag $E(t)$', linewidth=2)
+    ax[0].plot(t, np.abs(E), color='black', linestyle='dashed', label='abs $E(t)$')
+
+    # add details
+    ax[0].legend(loc=2)
+    ax[0].set_xlabel('time')
+    ax[0].set_ylabel('$E(t)$')
+
+    # plot frog trace
     ax[1].pcolormesh(frog.reshape(64, 64), cmap='jet')
-    ax[0].text(0.9, 1.05, 'mse: {}'.format(str(mse)), transform=ax[0].transAxes,
+
+    if mse:
+        mse = round(mse, 5)
+    ax[0].text(0.9, 1.05, 'compared FROG trace mse: {}'.format(str(mse)), transform=ax[0].transAxes,
                backgroundcolor='white')
 
     axtwin = ax[0].twinx()
-    axtwin.plot(t, np.unwrap(np.angle(E)), color='green')
+    axtwin.text(0.05, 0.02, title, transform=ax[0].transAxes, backgroundcolor='white')
+    axtwin.plot(t, np.unwrap(np.angle(E)), color='green', label='$\phi (t)$', linestyle='dashed')
+    axtwin.legend(loc=1)
+
+    if integrate=='real':
+
+        ax[0].fill_between(t[:t_0_index], 0, np.real(E)[:t_0_index], color='cyan')
+        ax[0].fill_between(t[t_0_index + 1:], 0, np.real(E)[t_0_index + 1:], color='lightgreen')
+
+        integral_left_side = dt * np.sum(np.real(E[:t_0_index]))
+        integral_right_side = dt * np.sum(np.real(E[t_0_index+1:]))
+
+        integral_right_side = round(integral_right_side, 18)
+        integral_left_side = round(integral_left_side, 18)
+
+        axtwin.text(-0.3, 1.1, 'real integral left side: {}'.format(integral_left_side),
+                    transform=axtwin.transAxes, backgroundcolor='cyan')
+        axtwin.text(-0.3, 1.02, 'real integral right side: {}'.format(integral_right_side),
+                    transform=axtwin.transAxes, backgroundcolor='lightgreen')
+
+    elif integrate=='abs':
+
+        ax[0].fill_between(t[:t_0_index], 0, np.abs(E)[:t_0_index], color='cyan')
+        ax[0].fill_between(t[t_0_index + 1:], 0, np.abs(E)[t_0_index + 1:], color='lightgreen')
+
+        integral_left_side = dt * np.sum(np.abs(E[:t_0_index]))
+        integral_right_side = dt * np.sum(np.abs(E[t_0_index + 1:]))
+
+        integral_right_side = round(integral_right_side, 18)
+        integral_left_side = round(integral_left_side, 18)
+
+        axtwin.text(-0.3, 1.1, 'abs integral left side: {}'.format(integral_left_side),
+                    transform=axtwin.transAxes, backgroundcolor='cyan')
+        axtwin.text(-0.3, 1.02, 'abs integral right side: {}'.format(integral_right_side),
+                    transform=axtwin.transAxes, backgroundcolor='lightgreen')
 
 
-    integral_left_side = dt * np.sum(np.abs(np.real(E[:t_0_index])))
-    integral_right_side = dt * np.sum(np.abs(np.real(E[t_0_index+1:])))
 
-    integral_right_side = round(integral_right_side, 18)
-    integral_left_side = round(integral_left_side, 18)
-
-
-    axtwin.text(-0.3, 1.1, 'abs integral left side: {}'.format(integral_left_side),
-                transform=axtwin.transAxes, backgroundcolor='white')
-    axtwin.text(-0.3, 1.0, 'abs integral right side: {}'.format(integral_right_side),
-                transform=axtwin.transAxes, backgroundcolor='white')
-
-
-
-
-
-
-
-
-
-def find_nearly_matching_frog_traces(compare_index, msemax, search_size, file):
+def find_nearly_matching_frog_traces(compare_index, msemax, search_size, file, integrate):
 
     hdf5_file = tables.open_file(filename=file, mode="r")
     E_real = hdf5_file.root.E_real[:, :]
@@ -78,19 +105,20 @@ def find_nearly_matching_frog_traces(compare_index, msemax, search_size, file):
             print('number of similar:', len(similar_frog_traces))
 
 
-    plot_frog_and_E(frog=compare_frog, E=compare_E, title='compare E, index: {}'.format(str(compare_index)),
-                    mse=None)
+    plot_frog_and_E(frog=compare_frog, E=compare_E, title='compare FROG, index: {}'.format(str(compare_index)),
+                    mse=None, integrate=integrate)
 
 
     for frog, E, index1, mse1 in zip(similar_frog_traces, their_E, their_index, their_mse):
 
         plot_frog_and_E(frog=np.array(frog), E=E,
-                        title='mse<{}, index: {}'.format(str(msemax), str(index1)), mse=mse1)
+                        title='mse<{}, index: {}'.format(str(msemax), str(index1)), mse=mse1,
+                        integrate=integrate)
 
     plt.show()
 
 
-def find_nearly_matching_E_field(compare_index, msemax, search_size, file):
+def find_nearly_matching_E_field(compare_index, msemax, search_size, file, integrate):
     hdf5_file = tables.open_file(filename=file, mode="r")
     E_real = hdf5_file.root.E_real[:, :]
     E_imag = hdf5_file.root.E_imag[:, :]
@@ -125,13 +153,14 @@ def find_nearly_matching_E_field(compare_index, msemax, search_size, file):
 
 
     plot_frog_and_E(frog=compare_frog, E=compare_E, title='compare E, index: {}'.format(str(compare_index)),
-                    mse=None)
+                    mse=None, integrate=integrate)
 
 
     for frog, E, index1, mse1 in zip(their_frog, similar_E_fields, their_index, their_mse):
 
         plot_frog_and_E(frog=np.array(frog), E=E,
-                        title='mse<{}, index: {}'.format(str(msemax), str(index1)), mse=mse1)
+                        title='mse<{}, index: {}'.format(str(msemax), str(index1)), mse=mse1,
+                        integrate=integrate)
 
     plt.show()
 
@@ -139,8 +168,12 @@ def find_nearly_matching_E_field(compare_index, msemax, search_size, file):
 
 _, t, w, dt, w0, _ = retrieve_data(plot_frog_bool=False, print_size=False)
 
-find_nearly_matching_frog_traces(compare_index=3, msemax=0.006, search_size=10000,
-                                 file="frogtrainingdata_noambiguities.hdf5")
+# find_nearly_matching_frog_traces(compare_index=4, msemax=0.006, search_size=10000,
+#                                  file="frogtrainingdata.hdf5", integrate='real')
+
+find_nearly_matching_frog_traces(compare_index=3, msemax=0.01, search_size=14000,
+                                 file="frogtrainingdata.hdf5", integrate='real')
+
 
 # find_nearly_matching_E_field(compare_index=1, msemax=0.0001, search_size=10000,
-#                                  file="frogtrainingdata_noambiguities.hdf5")
+#                                  file="frogtrainingdata.hdf5")

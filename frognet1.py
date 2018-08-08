@@ -113,8 +113,8 @@ def generateE_phi_vector(plot, phi_w):
 
     # check if integral of real part on left is greater than right
     # try using absolute integral
-    integral_left_side = dt * np.sum(np.abs(np.real(E_rolled_phi_corrected[:t_0_index])))
-    integral_right_side = dt * np.sum(np.abs(np.real(E_rolled_phi_corrected[t_0_index+1:])))
+    integral_left_side = dt * np.sum(np.real(E_rolled_phi_corrected[:t_0_index]))
+    integral_right_side = dt * np.sum(np.real(E_rolled_phi_corrected[t_0_index+1:]))
 
     # make flip always by setting to one
     # integral_right_side = 1
@@ -310,10 +310,10 @@ if __name__ == '__main__':
     phi_w = generate_phi_w(N=2**6, nodes=15, amplitude=3)
 
     # output 64 time step E
-    E, t, w, dt, w0 = generateE_phi_vector(plot=False, phi_w=phi_w)
+    E, t, w, dt, w0 = generateE_phi_vector(plot=True, phi_w=phi_w)
     # print(np.shape(E))
     # output 64x64 frog trace
-    frogtrace, tau, w = plot_frog(E=E, t=t, w=w, dt=dt, w0=w0, plot=False)
+    frogtrace, tau, w = plot_frog(E=E, t=t, w=w, dt=dt, w0=w0, plot=True)
     # print(np.shape(frogtrace))
     # print(np.shape(tau))
 

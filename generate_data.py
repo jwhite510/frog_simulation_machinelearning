@@ -27,7 +27,7 @@ if __name__ == '__main__':
     E_imag = np.imag(E)
 
     # create file
-    hdf5_file = tables.open_file('frogtrainingdata_noambiguities.hdf5', mode='w')
+    hdf5_file = tables.open_file('frogtrainingdata.hdf5', mode='w')
     frog_image_f = hdf5_file.create_earray(hdf5_file.root,
                                             'frog', tables.Float16Atom(), shape=(0, len(frogtrace_flat)))
     E_real_f = hdf5_file.create_earray(hdf5_file.root,
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     hdf5_file.close()
 
     # create file
-    hdf5_file = tables.open_file('frogtestdata_noambiguities.hdf5', mode='w')
+    hdf5_file = tables.open_file('frogtestdata.hdf5', mode='w')
     frog_image_f = hdf5_file.create_earray(hdf5_file.root,
                                             'frog', tables.Float16Atom(), shape=(0, len(frogtrace_flat)))
     E_real_f = hdf5_file.create_earray(hdf5_file.root,
@@ -50,7 +50,7 @@ if __name__ == '__main__':
     # populate file
     print('generating train samples')
     n_samples = 60000
-    hdf5_file = tables.open_file('frogtrainingdata_noambiguities.hdf5', mode='a')
+    hdf5_file = tables.open_file('frogtrainingdata.hdf5', mode='a')
     for i in range(n_samples):
 
         E, t, _, _, _, frogtrace_flat = retrieve_data(plot_frog_bool=False, print_size=False)
@@ -67,7 +67,7 @@ if __name__ == '__main__':
 
     print('generating test samples')
     n_samples = 500
-    hdf5_file = tables.open_file('frogtestdata_noambiguities.hdf5', mode='a')
+    hdf5_file = tables.open_file('frogtestdata.hdf5', mode='a')
     for i in range(n_samples):
 
         E, t, _, _, _, frogtrace_flat = retrieve_data(plot_frog_bool=False, print_size=False)
@@ -86,7 +86,7 @@ if __name__ == '__main__':
 
 
     # open and read
-    hdf5_file = tables.open_file('frogtrainingdata_noambiguities.hdf5', mode='r')
+    hdf5_file = tables.open_file('frogtrainingdata.hdf5', mode='r')
     index = 0
 
     E = hdf5_file.root.E_real[index, :] + 1j * hdf5_file.root.E_imag[index, :]
