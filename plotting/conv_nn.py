@@ -101,7 +101,7 @@ for axis, letter in zip([ax[0], ax[1]], ['a)', 'b)']):
 
 
 
-
+plt.savefig('/home/zom/Documents/MAKETEX_PROJECTS/research_paper/convlayerdiag.png')
 
 
 
