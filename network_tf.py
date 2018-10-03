@@ -219,10 +219,10 @@ _, t, w, dt, w0, _ = retrieve_data(plot_frog_bool=False, print_size=False)
 saver = tf.train.Saver()
 
 epochs = 300
-print("1000 epoch")
+print("{} epoch".format(epochs))
 
 if __name__ == "__main__":
-    modelname = "60k_samples_102018_tftest"
+    modelname = "60k_samples_holdout_proper"
 
     # create figures to visualize predictions in realtime
     fig1, ax1 = plt.subplots(4, 6, figsize=(14, 8))
