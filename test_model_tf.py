@@ -17,9 +17,9 @@ _, ax6 = plt.subplots(1, 2)
 # restore
 with tf.Session() as sess:
 
-    saver.restore(sess, "models/paper_10_samples.ckpt")
+    saver.restore(sess, "models/60k_samples_102018_tftest.ckpt")
 
-    batch_x_eval, batch_y_eval = get_data.evaluate_on_test_data()
+    batch_x_eval, batch_y_eval = get_data.evaluate_on_test_data(samples=10)
 
     print("test MSE: ", sess.run(loss, feed_dict={x: batch_x_eval, y_true: batch_y_eval}))
 
