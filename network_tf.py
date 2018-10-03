@@ -196,7 +196,8 @@ convo_3_flat = tf.contrib.layers.flatten(convo_3)
 full_layer_one = normal_full_layer(convo_3_flat, 512)
 
 #dropout
-hold_prob = tf.constant(0.1, dtype=tf.float32)
+# hold_prob = tf.constant(0.1, dtype=tf.float32)
+hold_prob = tf.placeholder_with_default(1.0, shape=())
 dropout_layer = tf.nn.dropout(full_layer_one, keep_prob=hold_prob)
 
 y_pred = normal_full_layer(dropout_layer, 128)
@@ -217,12 +218,11 @@ train_mse_tb = tf.summary.scalar("train_mse", loss)
 _, t, w, dt, w0, _ = retrieve_data(plot_frog_bool=False, print_size=False)
 saver = tf.train.Saver()
 
-#epochs = 500
-epochs = 1000
+epochs = 300
 print("1000 epoch")
 
 if __name__ == "__main__":
-    modelname = "60k_samples_leaky_dropout_withflip"
+    modelname = "60k_samples_102018_tftest"
 
     # create figures to visualize predictions in realtime
     fig1, ax1 = plt.subplots(4, 6, figsize=(14, 8))
@@ -260,7 +260,7 @@ if __name__ == "__main__":
                 #batch_x, batch_y = get_data.next_batch_random()
 
                 #train network
-                sess.run(train, feed_dict={x: batch_x, y_true: batch_y})
+                sess.run(train, feed_dict={x: batch_x, y_true: batch_y, hold_prob: 0.1})
 
             print("")
 
