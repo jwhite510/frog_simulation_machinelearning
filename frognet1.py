@@ -307,7 +307,7 @@ def generate_phi_w(N, nodes, amplitude):
 
 if __name__ == '__main__':
 
-    phi_w = generate_phi_w(N=2**6, nodes=15, amplitude=3)
+    phi_w = generate_phi_w(N=2**6, nodes=20, amplitude=4)
 
     # output 64 time step E
     E, t, w, dt, w0 = generateE_phi_vector(plot=True, phi_w=phi_w)
