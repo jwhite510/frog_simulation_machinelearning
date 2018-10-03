@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 def retrieve_data(plot_frog_bool, print_size):
 
-    phi_w = generate_phi_w(N=2**6, nodes=15, amplitude=3)
+    phi_w = generate_phi_w(N=2**6, nodes=20, amplitude=4)
 
     E, t, w, dt, w0 = generateE_phi_vector(plot=False, phi_w=phi_w)
 
