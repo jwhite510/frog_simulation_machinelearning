@@ -13,7 +13,7 @@ f = df * np.arange(-N/2, N/2, 1)
 
 # applt random phase to E_t
 num_nodes = 30
-amplitude = 5
+amplitude = 8
 phase_nodes = amplitude * (np.random.rand(num_nodes)-0.5)
 phase_nodes_f = np.linspace(f[0], f[-1], num_nodes)
 phase_interp = interpolate.interp1d(phase_nodes_f, phase_nodes, kind='cubic')
@@ -68,8 +68,17 @@ ax.set_xlabel(r'$t$')
 ax = fig.add_subplot(gs[3,:2])
 ax.pcolormesh(t, t, np.real(E_t_nodelay), cmap='jet')
 
-ax = fig.add_subplot(gs[3,2])
+
+ax = fig.add_subplot(gs[1,2])
+ax.pcolormesh(t, t, np.imag(E_t_phase_delay  * E_t_nodelay), cmap='jet')
+
+ax = fig.add_subplot(gs[2,2])
 ax.pcolormesh(t, t, np.real(E_t_phase_delay  * E_t_nodelay), cmap='jet')
+
+ax = fig.add_subplot(gs[3,2])
+ax.pcolormesh(t, t, np.abs(E_t_phase_delay  * E_t_nodelay), cmap='jet')
+
+
 
 ax = fig.add_subplot(gs[4,2])
 ax.pcolormesh(t, t, np.abs(frog)**2, cmap='jet')
