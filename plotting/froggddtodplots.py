@@ -26,7 +26,7 @@ def define_E(N=512, tmax=200e-15, gdd=0.0, tod=0.0, plotting=False):
 
 
     # apply phase
-    E_f_prop = E_f * np.exp(1j * k * z)
+    E_f_prop = E_f * np.exp(- 1j * k * z)
 
     # reverse ft
     E_t_prop = np.fft.fftshift(np.fft.ifft(np.fft.fftshift(E_f_prop)))
