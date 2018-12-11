@@ -34,36 +34,37 @@ def define_E(N=512, tmax=200e-15, gdd=0.0, tod=0.0, plotting=False):
 
     if plotting:
 
-        fig = plt.figure()
-        gs = fig.add_gridspec(5,2)
+        # fig = plt.figure()
+        # gs = fig.add_gridspec(5,2)
 
         # plot E_t
-        ax = fig.add_subplot(gs[0,:])
-        ax.plot(t, np.real(E_t), color='blue')
+        # ax = fig.add_subplot(gs[0,:])
+        # ax.plot(t, np.real(E_t), color='blue')
 
         # plot E_f
-        ax = fig.add_subplot(gs[1,:])
-        ax.plot(f, np.real(E_f), color='blue')
-        ax.plot(f, np.imag(E_f) , color='red')
+        # ax = fig.add_subplot(gs[1,:])
+        # ax.plot(f, np.real(E_f), color='blue')
+        # ax.plot(f, np.imag(E_f) , color='red')
 
         # plot k(w)
-        ax = fig.add_subplot(gs[2,:])
-        ax.plot(f, k, color='purple')
+        # ax = fig.add_subplot(gs[2,:])
+        # ax.plot(f, k, color='purple')
 
         # plot E_F_PROP
-        ax = fig.add_subplot(gs[3,:])
-        ax.plot(f, np.real(E_f_prop), color='blue')
-        ax.plot(f, np.imag(E_f_prop), color='red')
+        # ax = fig.add_subplot(gs[3,:])
+        # ax.plot(f, np.real(E_f_prop), color='blue')
+        # ax.plot(f, np.imag(E_f_prop), color='red')
 
         # plot E_t_prop
-        ax = fig.add_subplot(gs[4,:])
-        ax.plot(t, np.real(E_t_prop), color='blue')
+        # ax = fig.add_subplot(gs[4,:])
+        # ax.plot(t, np.real(E_t_prop), color='blue')
         # ax.plot(t, np.imag(E_t_prop), color='red')
-        ax.plot(t, np.abs(E_t_prop), color='black')
+        # ax.plot(t, np.abs(E_t_prop), color='black')
 
 
         # make nice plot
-        fig = plt.figure(figsize=(9, 6))
+        fig = plt.figure(figsize=(9, 5))
+        plt.subplots_adjust(top=0.95, bottom=0.1, hspace=0.3, wspace=0.3, left=0.10, right=0.90)
         gs = fig.add_gridspec(2, 2)
 
         # plot spectral
@@ -74,13 +75,22 @@ def define_E(N=512, tmax=200e-15, gdd=0.0, tod=0.0, plotting=False):
         ax.plot((f*1e-14)[min_x:max_x], spec, color='black', label='$|E(f)|$')
         ax.set_xlim((f*1e-14)[min_x], (f*1e-14)[max_x])
         ax.set_ylim(0, 1)
+        ax.set_xlabel('frequency [$10^{14}$Hz]')
         axtwin = ax.twinx()
         phase = np.unwrap(np.angle((E_f_prop[min_x:max_x])))
         phase = phase - np.min(phase)
         axtwin.plot((f*1e-14)[min_x:max_x],
                     phase, color='green',
                     label='Real $E(t)$')
+        axtwin.set_ylabel('$\phi$ [rad]')
+        axtwin.yaxis.label.set_color('green')
+        axtwin.tick_params(axis='y', colors='green')
+        if gdd==0 and tod==0:
+            # min_x, max_x = 190, -190
+            axtwin.set_ylim(-1.5, 1)
+            print("set")
         ax.legend(loc=1)
+        ax.text(-0.15, 1.01, 'b)', transform=ax.transAxes, weight='bold')
 
         # plot in time
         min_x, max_x = 150, -150
@@ -89,22 +99,33 @@ def define_E(N=512, tmax=200e-15, gdd=0.0, tod=0.0, plotting=False):
         ax.plot((t * 1e15)[min_x:max_x], np.abs(E_t_prop)[min_x:max_x], color='black', label='$|E(t)|$', linestyle='dashed')
         gdd_num = round(gdd * 1e30, 10)
         tod_num = round(tod * 1e45, 10)
-        ax.text(0.05, 0.89, 'GDD: {} [$fs^2$]\nTOD: {} [$fs^3$]'.format(gdd_num, tod_num), backgroundcolor='white',
+        ax.text(0.05, 1.01, 'GDD: {} [$fs^2$]\tTOD: {} [$fs^3$]'.format(gdd_num, tod_num),
                 transform=ax.transAxes)
         ax.set_xlim((t * 1e15)[min_x], (t * 1e15)[max_x])
         ax.set_ylim(-1, 1)
+        ax.set_xlabel('time [fs]')
+        ax.set_ylabel('Electric Field\n[arbitrary units]')
         axtwin = ax.twinx()
-        phase = np.unwrap(np.angle((E_t_prop[min_x:max_x])))-2*np.pi*f0*t[min_x:max_x]
-        phase = phase - np.min(phase)
+
+        if gdd==0 and tod==0:
+            axtwin.set_ylim(-1.5, 1)
+            phase = np.zeros_like(np.unwrap(np.angle((E_t_prop[min_x:max_x]))) - 2 * np.pi * f0 * t[min_x:max_x])
+        else:
+            phase = np.unwrap(np.angle((E_t_prop[min_x:max_x]))) - 2 * np.pi * f0 * t[min_x:max_x]
+            phase = phase - np.min(phase)
+
         axtwin.plot((t * 1e15)[min_x:max_x],
                     phase, color='green',
                     label='Real $E(t)$')
+        axtwin.yaxis.label.set_color('green')
+        axtwin.tick_params(axis='y', colors='green')
+        axtwin.set_ylabel('$\phi$ [rad]')
         ax.legend(loc=1)
+        ax.text(-0.2, 1.01, 'a)', transform=ax.transAxes, weight='bold')
+        plt.savefig('./dispersion_frog_pics/phasespectralandtime_gdd{}_tod{}.png'.format(gdd_num, tod_num))
 
 
     return E_f_prop, E_t_prop, t, f
-
-
 
 
 def construct_frog_trace(E_t, E_f, t, f, plotting=False):
@@ -139,7 +160,7 @@ def construct_frog_trace(E_t, E_f, t, f, plotting=False):
 
 def plot_E_t_and_trace(t, f, E_t, trace):
 
-    fig = plt.figure(figsize=(9, 6))
+    fig = plt.figure(figsize=(9, 5))
     gs = fig.add_gridspec(2, 2)
 
     ax = fig.add_subplot(gs[:,0])
@@ -152,11 +173,11 @@ def plot_E_t_and_trace(t, f, E_t, trace):
     ax.set_ylabel('Electric Field\n[arbitrary units]')
     gdd_num = round(gdd*1e30, 10)
     tod_num = round(tod*1e45, 10)
-    ax.text(0.05, 0.89, 'GDD: {} [$fs^2$]\nTOD: {} [$fs^3$]'.format(gdd_num, tod_num), backgroundcolor='white', transform=ax.transAxes)
+    ax.text(0.05, 1.01, 'GDD: {} [$fs^2$]\tTOD: {} [$fs^3$]'.format(gdd_num, tod_num), transform=ax.transAxes)
     ax.set_ylim(-1,1)
     ax.set_xlim((t*1e15)[min_x],(t*1e15)[max_x])
-    ax.set_title('Electric Field')
     ax.legend(loc=1)
+    ax.text(-0.2, 1.01, 'a)', transform=ax.transAxes, weight='bold')
 
     ax = fig.add_subplot(gs[:, 1])
     min_x, max_x = 150, -150
@@ -164,11 +185,12 @@ def plot_E_t_and_trace(t, f, E_t, trace):
     ax.pcolormesh((t*1e15)[min_x:max_x], (f*1e-14)[min_y:max_y], trace[min_y:max_y:, min_x:max_x], cmap='jet')
     ax.set_xlabel('delay [fs]')
     ax.set_ylabel('frequency [$10^{14}$Hz]')
-    ax.set_title('FROG trace')
+    ax.text(-0.05, 1.01, 'b)', transform=ax.transAxes, weight='bold')
     ax.yaxis.tick_right()
     ax.yaxis.set_label_position('right')
 
     plt.subplots_adjust(top=0.95, bottom=0.1, hspace=0.3, wspace=0.1, left=0.10, right=0.90)
+    plt.savefig('./dispersion_frog_pics/frog_gdd{}_tod{}.png'.format(gdd_num, tod_num))
 
 
 
@@ -179,7 +201,7 @@ if __name__ == "__main__":
 
     # gdd = 700e-30 # s**2
     gdd = 0 # s**2
-    tod = 25000e-45 # s**3
+    tod = -25000e-45 # s**3
     # tod = 0
 
 
