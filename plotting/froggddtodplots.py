@@ -93,7 +93,8 @@ def define_E(N=512, tmax=200e-15, gdd=0.0, tod=0.0, plotting=False):
         ax.text(-0.15, 1.01, 'b)', transform=ax.transAxes, weight='bold')
 
         # plot in time
-        min_x, max_x = 150, -150
+        # min_x, max_x = 150, -150
+        min_x, max_x = 165, -165
         ax = fig.add_subplot(gs[:, 0])
         ax.plot((t * 1e15)[min_x:max_x], np.real(E_t_prop)[min_x:max_x], color='blue', label='Real $E(t)$')
         ax.plot((t * 1e15)[min_x:max_x], np.abs(E_t_prop)[min_x:max_x], color='black', label='$|E(t)|$', linestyle='dashed')
@@ -201,8 +202,8 @@ if __name__ == "__main__":
 
     # gdd = 700e-30 # s**2
     gdd = 0 # s**2
-    # tod = -25000e-45 # s**3
-    tod = 0
+    tod = 25000e-45 # s**3
+    # tod = 0
 
 
 
