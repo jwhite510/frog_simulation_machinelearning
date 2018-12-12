@@ -14,8 +14,8 @@ def define_E(N=512, tmax=200e-15, gdd=0.0, tod=0.0, plotting=False):
     f = df * np.arange(-N/2, N/2, 1)
     f0 = 1.5e14
 
-    tau = 10e-15
-    E_t = np.exp(-t**2 / tau**2) * np.exp(1j * 2*np.pi * f0 * t)
+    tau = 10e-15 # fwhm [fs]
+    E_t = np.exp(- 2 * np.log(2) * t**2 / tau**2) * np.exp(1j * 2*np.pi * f0 * t)
 
     E_f = np.fft.fftshift(np.fft.fft(np.fft.fftshift(E_t)))
 
@@ -201,8 +201,8 @@ if __name__ == "__main__":
 
     # gdd = 700e-30 # s**2
     gdd = 0 # s**2
-    tod = -25000e-45 # s**3
-    # tod = 0
+    # tod = -25000e-45 # s**3
+    tod = 0
 
 
 
