@@ -47,7 +47,7 @@ ax[0].text(0.1, 0.8, "z: 0m", transform=ax[0].transAxes)
 
 f_crop_l = 250
 f_crop_r = 210
-lns1 = ax[1].plot(f[f_crop_l:-f_crop_r], np.abs(E_f)[f_crop_l:-f_crop_r], label='$|E(\omega)|$', color='black')
+lns1 = ax[1].plot(f[f_crop_l:-f_crop_r], np.abs(E_f)[f_crop_l:-f_crop_r], label='$|U(\omega)|$', color='black')
 axtwin = ax[1].twinx()
 lns2 = axtwin.plot(f[f_crop_l:-f_crop_r], k[f_crop_l:-f_crop_r], color='purple', label='$k(\omega)$')
 lns = lns1 + lns2
